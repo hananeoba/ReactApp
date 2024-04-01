@@ -1,21 +1,18 @@
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Text, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
-import HomeScreen from "./app/HomeScreen";
-import LoginScreen from "./app/LoginScreen";
+import HomeScreen from "./src/app/HomeScreen";
+import LoginScreen from "./src/app/LoginScreen";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider } from "./src/contexts/AuthContext";
+import { Navigation } from "./src/components/navigation";
+import 'react-native-gesture-handler';
 export default function App() {
-  const stack = createNativeStackNavigator();
   return (
-    <NavigationContainer>  
-     <AuthProvider>
-        <stack.Navigator>
-          <stack.Screen name="login" component={LoginScreen} />
-          <stack.Screen component={HomeScreen} name="home" />
-        </stack.Navigator>
-      </AuthProvider>
-    </NavigationContainer>
+    <AuthProvider>
+      <Navigation />
+      
+    </AuthProvider>
   );
 }
 
