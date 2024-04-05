@@ -10,7 +10,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
         <LinearGradient
-          colors={["#abc4ff", "#edf2fb"]} // Adjust opacity and colors as needed
+          colors={["#cdb4db","#abc4ff"]} // Adjust opacity and colors as needed
           style={styles.overlay}
         >
           <Spinner
@@ -31,15 +31,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  backgroundImage: {
-    flex: 1,
-    resizeMode: "cover",
-  },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "transparent",
-    justifyContent: "center",
-    alignItems: "center",
+    //backgroundColor: "transparent",
+    //justifyContent: "center",
+    //alignItems: "center",
   },
   content: {
     flex: 1,

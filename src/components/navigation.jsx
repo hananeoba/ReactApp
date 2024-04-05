@@ -9,7 +9,7 @@ import { AuthContext } from "../contexts/AuthContext";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import EventScreen from "../app/EventScreen";
 import { StatusBar } from 'expo-status-bar';
-
+import CustomDrawer from "./costumDrawer";
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -20,17 +20,18 @@ const Navigation = () => {
       <StatusBar style="auto"  animated = {true}/>
       {authToken ? (
         <Drawer.Navigator
+         drawerContent={props => <CustomDrawer {...props} />}
           initialRouteName="Home"
           screenOptions={{
             headerStyle: {
-              backgroundColor: "#76c893"
+              backgroundColor: "#cdb4db"
               },
-            headerTintColor: "black",
+            headerTintColor: "gray",
             headerTitleStyle: {
               fontWeight: "semibold",
               alignContent:"center",
               textAlign:"center",
-              backgroundColor:"transparent"
+              backgroundColor:"linear-gradient(direction, color-stop1, color-stop2)"
             },
             style: {
               backgroundColor: "linear-gradient(to right, ff5858,ff5858)"

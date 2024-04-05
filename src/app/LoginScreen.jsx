@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Button,
 } from "react-native";
 import { AuthContext } from "../contexts/AuthContext";
 import Spinner from "react-native-loading-spinner-overlay";

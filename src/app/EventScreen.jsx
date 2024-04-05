@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import {
   StyleSheet,
   SafeAreaView,
@@ -8,22 +8,24 @@ import {
   StatusBar,
   Touchable,
 } from "react-native";
+import { AuthContext } from "../contexts/AuthContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { TouchableOpacity } from "react-native-gesture-handler";
 
 const EventScreen = () => {
   const [company, setCompany] = useState("");
   const [event, setEvent] = useState("");
+  const {authUser}= useContext(AuthContext);
 
   return (
-    <LinearGradient colors={["#76c893", "#d9ed92"]} style={styles.gradient}>
+    <LinearGradient colors={["#cdb4db", "#abc4ff"]} style={styles.gradient}>
       <SafeAreaView style={styles.container}>
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
-            value={company}
+            value={authUser.company}
             onChangeText={setCompany}
-            placeholder="Company"
+            placeholder={authUser.company}
             autoCorrect={false}
             autoCapitalize="none"
           />
@@ -35,6 +37,25 @@ const EventScreen = () => {
             autoCorrect={false}
             autoCapitalize="none"
           />
+      </View>
+      <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              value={company}
+              onChangeText={setCompany}
+              placeholder="Company"
+              defaultValue={authUser.company}
+              autoCorrect={false}
+              autoCapitalize="none"
+            />
+            <TextInput
+              style={styles.input}
+              value={event}
+              onChangeText={setEvent}
+              placeholder="Event"
+              autoCorrect={false}
+              autoCapitalize="none"
+            />
         </View>
         <View style={styles.container2}>
         <TouchableOpacity style={styles.button} onPress={() => {}}>
