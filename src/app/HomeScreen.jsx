@@ -4,9 +4,12 @@ import Spinner from "react-native-loading-spinner-overlay";
 import { AuthContext } from "../contexts/AuthContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { useState } from "react";
+import EventModal from "../components/EventModal";
 
 export default function HomeScreen() {
   const { isLoading, authUser, logout } = useContext(AuthContext);
+  const [modalVisible, setModalVisible] = useState(false);
   return (
     <View style={styles.container}>
         <LinearGradient
@@ -20,7 +23,8 @@ export default function HomeScreen() {
           />
           <SafeAreaView style={styles.content}>
             <Text style={styles.greetingText}>Hello: {authUser.name}</Text>
-            <Button title="Logout" onPress={() => logout()} />
+            <Button title="add event" onPress={() => setModalVisible(true)} />
+            <EventModal visible={modalVisible} onClose={() => setModalVisible(false)} />
           </SafeAreaView>
         </LinearGradient>
     </View>

@@ -1,0 +1,8 @@
+{
+    "styles": {
+      "flex": { "flex": 1 },
+      "justifyCenter": { "justifyContent": "center" },
+      "itemsCenter": { "alignItems": "center" },
+      "p20": { "padding": 20 }
+    }
+  }

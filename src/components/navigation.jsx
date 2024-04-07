@@ -7,9 +7,11 @@ import HomeScreen from "../app/HomeScreen";
 import LoginScreen from "../app/LoginScreen";
 import { AuthContext } from "../contexts/AuthContext";
 import { createDrawerNavigator } from "@react-navigation/drawer";
-import EventScreen from "../app/EventScreen";
 import { StatusBar } from 'expo-status-bar';
 import CustomDrawer from "./costumDrawer";
+import ChangePassword from "../app/ChangePassword";
+import EventModal from "./EventModal";
+import CostumEvent from "../app/CostumEvent";
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -31,19 +33,12 @@ const Navigation = () => {
               fontWeight: "semibold",
               alignContent:"center",
               textAlign:"center",
-              backgroundColor:"linear-gradient(direction, color-stop1, color-stop2)"
-            },
-            style: {
-              backgroundColor: "linear-gradient(to right, ff5858,ff5858)"
-            },
+            }
           }}
         >
           <Drawer.Screen name="Home" component={HomeScreen} options={{}} />
-          <Drawer.Screen
-            name="Add Events"
-            component={EventScreen}
-            options={{}}
-          />
+          <Drawer.Screen name="CostumeEvent" component={CostumEvent} />
+          <Drawer.Screen name="ChangePassword" component={ChangePassword} />
         </Drawer.Navigator>
       ) : (
         <Stack.Navigator>

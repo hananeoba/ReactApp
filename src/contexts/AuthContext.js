@@ -31,6 +31,7 @@ export const AuthProvider = ({ children }) => {
         setIsLoading(false);
       })
       .catch((error) => {
+        alert("Invalid credentials");
         console.log(`RegisterError: ${error}`);
         setIsLoading(false);
       });
@@ -44,6 +45,7 @@ export const AuthProvider = ({ children }) => {
       setAuthToken(null);
     })
     .catch((error) => {
+      alert("Logout failed", error);
       console.log(`LogoutError: ${error}`);
     });
     
