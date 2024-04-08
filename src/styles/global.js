@@ -1,0 +1,61 @@
+import { StyleSheet } from "react-native";
+
+export const globalStyles = StyleSheet.create({
+  modalContent: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginVertical: 60,
+    marginHorizontal: 20,
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    paddingTop: 30,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    padding: 10,
+    fontSize: 18,
+    borderRadius: 6,
+    width: 300,
+  },
+  errorText: {
+    color: "crimson",
+    fontWeight: "bold",
+    marginBottom: 10,
+    marginTop: 6,
+    textAlign: "center",
+    alignSelf: "flex-start",
+  },
+  buttonContainer: {
+    marginTop: 20,
+    borderRadius: 6,
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+    alignSelf: "flex-start",
+    paddingLeft: 20,
+    marginBottom: 10,
+    color: 'maroon',
+  },
+});
