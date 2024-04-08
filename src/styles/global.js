@@ -58,4 +58,14 @@ export const globalStyles = StyleSheet.create({
     marginBottom: 10,
     color: 'maroon',
   },
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginVertical: 10,
+  },
+  switchLabel: {
+    fontSize: 16,
+    marginRight: 10,
+  },
 });
