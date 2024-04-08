@@ -11,6 +11,7 @@ import { StatusBar } from 'expo-status-bar';
 import CustomDrawer from "./costumDrawer";
 import ChangePassword from "../app/ChangePassword";
 import EventModal from "./EventModal";
+import EventScreen from "../app/EventScreen";
 import CostumEvent from "../app/CostumEvent";
 
 const Stack = createStackNavigator();
@@ -39,6 +40,7 @@ const Navigation = () => {
           <Drawer.Screen name="Home" component={HomeScreen} options={{}} />
           <Drawer.Screen name="CostumeEvent" component={CostumEvent} />
           <Drawer.Screen name="ChangePassword" component={ChangePassword} />
+          <Drawer.Screen name="EventScreen" component={EventScreen} />
         </Drawer.Navigator>
       ) : (
         <Stack.Navigator>
