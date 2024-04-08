@@ -10,6 +10,7 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
   Keyboard,
+  Switch,
 } from "react-native";
 import { globalStyles } from "../styles/global.js";
 import { Formik } from "formik";
@@ -35,6 +36,19 @@ export default function EventModal({ modalOpen, setModalOpen, addEvent }) {
   const workarray = ["work", "school", "personal", "other"];
   const structurearray = ["structure", "flexible", "hybrid", "other"];
   const companyarray = ["company", "google", "microsoft", "amazon", "other"];
+  const eventStatus = ["status1", "status2", "status3", "other"];
+
+  const [isEnabled, setIsEnabled] = useState(false);
+
+  const toggleSwitch = () => {
+    setIsEnabled(previousState => !previousState);
+    if (!isEnabled) {
+      setEventStatus(null);
+      setEventDuration(null);
+      setEventCause(null);
+    }
+  };
+  
   const eventType = [
     "eventType",
     "meeting",
@@ -221,7 +235,46 @@ export default function EventModal({ modalOpen, setModalOpen, addEvent }) {
                   <Text style={globalStyles.errorText}>
                     {props.touched.eventType && props.errors.eventType}
                   </Text>
+                  
 
+                  <View style={styles.switchContainer}>
+                    <Text style={styles.switchLabel}>Additional Information</Text>
+                    <Switch
+                      trackColor={{false: '#767577', true: '#81b0ff'}}
+                      thumbColor={isEnabled ? '#f5dd4b' : '#f4f3f4'}
+                      ios_backgroundColor="#3e3e3e"
+                      onValueChange={toggleSwitch}
+                      value={isEnabled}
+                    />
+                  </View>
+
+                  {isEnabled && ( 
+                    <Text style={globalStyles.label}>Event Status</Text>
+                    <Picker
+                    style={globalStyles.input}
+                    selectedValue={props.values.eventStatus}
+                    onValueChange={(value) => {
+                      if (value !== null) {
+                        props.handleChange("eventStatus")(value);
+                      }
+                    }}
+                  >
+                    <Picker.Item
+                      label="Select Event Status"
+                      value={null}
+                      enabled={false}
+                    />
+                    {eventStatus.map((item, index) => {
+                      return (
+                        <Picker.Item label={item} value={item} key={index} />
+                      );
+                    })}
+                  </Picker>
+                  <Text style={globalStyles.errorText}>
+                    {props.touched.eventStatus && props.errors.eventStatus}
+                  </Text>
+              )}
+      
 
                   <View style={globalStyles.buttonContainer}>
                     <Button
