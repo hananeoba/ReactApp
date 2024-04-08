@@ -237,8 +237,8 @@ export default function EventModal({ modalOpen, setModalOpen, addEvent }) {
                   </Text>
                   
 
-                  <View style={styles.switchContainer}>
-                    <Text style={styles.switchLabel}>Additional Information</Text>
+                  <View style={globalStyles.switchContainer}>
+                    <Text style={globalStyles.switchLabel}>Additional Information</Text>
                     <Switch
                       trackColor={{false: '#767577', true: '#81b0ff'}}
                       thumbColor={isEnabled ? '#f5dd4b' : '#f4f3f4'}
