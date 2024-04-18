@@ -1,6 +1,7 @@
 import React, { useState, useContext } from "react";
 import {
   View,
+  SafeAreaView,
   Text,
   TextInput,
   TouchableOpacity,
@@ -8,40 +9,51 @@ import {
 } from "react-native";
 import { AuthContext } from "../contexts/AuthContext";
 import Spinner from "react-native-loading-spinner-overlay";
-import { LinearGradient } from "expo-linear-gradient";
+import LinearGradient from "../components/LinearGradient";
+import axios from "axios";
 
 const LoginScreen = ({ navigation }) => {
   const [user_name, setUserName] = useState("");
   const [password, setPassword] = useState("");
-  const { login, isLoading } = useContext(AuthContext);
+  const { isLoading, setIsLoading, login } = useContext(AuthContext);
 
   return (
-    <LinearGradient
-      colors={["#cdb4db", "#a2d2ff"]}
-      style={styles.container}
-    >
-      <Spinner
-        visible={isLoading}
-        textContent={"Loading..."}
-        textStyle={{ color: "#FFF" }}
-      />
-      <Text style={styles.text}>Username</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Username"
-        keyboardType="email-address"
-        onChangeText={(text) => setUserName(text)}
-      />
-      <Text style={styles.text}>Password</Text>
-      <TextInput
-        style={styles.input}
-        secureTextEntry={true}
-        placeholder="Password"
-        onChangeText={(text) => setPassword(text)}
-      />
-      <TouchableOpacity style={styles.button} onPress={() => login(user_name, password)}>
-        <Text style={styles.buttonText}>Login</Text>
-      </TouchableOpacity>
+    <LinearGradient>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Spinner
+          visible={isLoading}
+          textContent={"Loading..."}
+          textStyle={{ color: "#FFF" }}
+        />
+        <View style={styles.container}>
+          <Text style={styles.text}>Username</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Username"
+            keyboardType="email-address"
+            onChangeText={(text) => setUserName(text)}
+          />
+          <Text style={styles.text}>Password</Text>
+          <TextInput
+            style={styles.input}
+            secureTextEntry={true}
+            placeholder="Password"
+            onChangeText={(text) => setPassword(text)}
+          />
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => login("user", "1234")}
+          >
+            <Text style={styles.buttonText}>Login</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </LinearGradient>
   );
 };

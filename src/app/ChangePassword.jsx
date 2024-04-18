@@ -1,15 +1,17 @@
-import React from 'react';
-import {View, Text,TouchableOpacity, StyleSheet} from 'react-native';
+import LinearGradient from '../components/LinearGradient';
+import React from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 
 const ChangePassword = () => {
-    
-    return (
-        <View>
-            <Text>Change Password</Text>
-        </View>
-    );
-}
+  return (
+    <LinearGradient>
+      <View>
+        <Text>Change Password</Text>
+      </View>
+    </LinearGradient>
+  );
+};
 
-const styles = StyleSheet.create({})
+const styles = StyleSheet.create({});
 
 export default ChangePassword;

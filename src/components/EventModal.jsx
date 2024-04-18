@@ -1,200 +1,349 @@
-import React, { useState } from 'react';
-import { View, Modal, Button, TextInput, StyleSheet, Text } from 'react-native';
+// EventModal.js
+import React, { useEffect, useState } from "react";
+import {
+  Modal,
+  StyleSheet,
+  Button,
+  TextInput,
+  View,
+  Text,
+  ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Switch,
+} from "react-native";
+import { globalStyles } from "../styles/global.js";
+import { Formik } from "formik";
+import * as yup from "yup";
 import { Picker } from '@react-native-picker/picker';
+import axios from "axios";
+import { BaseURL } from "../config";
+import { useContext } from "react";
+import { AuthContext } from "../contexts/AuthContext";
 
-const EventModal = ({ visible, onClose }) => {
-  const [step, setStep] = useState(1);
-  const [eventName, setEventName] = useState('');
-  const [eventWork, setEventWork] = useState('');
-  const [eventDescription, setEventDescription] = useState('');
-  const [eventLocation, setEventLocation] = useState('');
-  const [eventType, setEventType] = useState('');
-  const [eventStatus, setEventStatus] = useState('');
-  const [eventDuration, setEventDuration] = useState('');
-  const [eventCauses, setEventCauses] = useState('');
-  const [errors, setErrors] = useState({});
+const eventSchema = yup.object({
+  work: yup.string().required(),
+  company: yup.string().required(),
+  structure: yup.string().required(),
+  label: yup.string().required().min(4),
+  description: yup.string().required().min(8),
+  code: yup
+    .string()
+    .required()
+    .test(
+      "is required ",
+      "Code must be a number of less than 6 digits",
+      (val) => {
+        return parseInt(val) > 0 && parseInt(val) < 999999;
+      }
+    ),
+  location: yup.string().required().min(4),
+  eventType: yup.string().required(),
+});
 
-  const validateFields = (step) => {
-    const errors = {};
-    if (step === 1)
-    { if (!eventName.trim()) {
-        errors.eventName = 'Event Name is required';
-      }
-      if (!eventWork) {
-        errors.eventWork = 'Work is required';
-      }
-      if (!eventDescription.trim()) {
-        errors.eventDescription = 'Event Description is required';
-      }
-      if (!eventLocation.trim()) {
-        errors.eventLocation = 'Event Location is required';
-      }
-      setErrors(errors);
-      return Object.keys(errors).length === 0;
-    }
-    if (step === 2)
-    {
-        if (!eventType) {
-        errors.eventType = 'Event Type is required';
-      }
-      if (!eventStatus.trim()) {
-        errors.eventStatus = 'Event Status is required';
-      }
-      if (!eventDuration.trim()) {
-        errors.eventDuration = 'Event Duration is required';
-      }
-      if (!eventCauses.trim()) {
-        errors.eventCauses = 'Event Causes are required';
-      }
-      setErrors(errors);
-      return Object.keys(errors).length === 0;
+const EventModal = ({ modalOpen, setModalOpen }) => {
+  const { authToken } = useContext(AuthContext);
+  const [work, setWork] = useState(null);
+  const [eventT, setEventT] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEnabled, setIsEnabled] = useState(false);
+
+  useEffect(() => {
+  }, []);
+
+  useEffect(() => {
+  }, []);
+
+  const toggleSwitch = () => {
+    setIsEnabled((previousState) => !previousState);
+    if (!isEnabled) {
+      setEventStatus(null);
     }
   };
 
-  const handleNextStep = () => {
-    if (validateFields(step)) {
-      setStep(step + 1);
-    }
-  };
+  const eventType = [1, 2, 3, 4, 5, 6];
+  const workarray = [1, 2, 3, 4, 5];
+  const companyarray = [1, 2, 3, 4, 5];
+  const structurearray = [1, 2, 3, 4, 5];
+  const eventStatus = ["fixed", "discovered", "mid-way"];
 
-  const handlePreviousStep = () => {
-    setStep(step - 1);
-  };
-
-  const handleSubmit = () => {
-    if (validateFields(step)) {
-      console.log({
-        eventName,
-        eventWork,
-        eventDescription,
-        eventLocation,
-        eventType,
-        eventStatus,
-        eventDuration,
-        eventCauses,
+  const addEvent = async (values) => {
+    axios
+      .post(
+        "http://192.168.0.44:8000/api/events/create/",
+        {
+          work: { id: values.work },
+          event_type: { id: values.eventType },
+          event_status: "Status of the event",
+          event_duration: "2 days",
+          event_causes: [{ id: 1 }],
+          code: values.code,
+          label: values.label,
+          start_date: "2024-03-05",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${authToken.access}`,
+          },
+        }
+      )
+      .then((res) => {
+        console.log(`response${res}`);
+      })
+      .catch((error) => {
+        console.log(error);
       });
-      setEventCauses('');
-      setEventDescription('');
-      setEventDuration('');
-      setEventLocation('');
-      setEventName('');
-      setEventStatus('');
-      setEventType('');
-      setEventWork('');
-      setStep(1);
-       onClose();
-    }
-     
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent= {true} >
-      <View style={styles.container}>
-        {step === 1 && (
-          <View style={styles.formContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Event Name"
-              value={eventName}
-              onChangeText={setEventName}
-            />
-            {errors.eventName && <Text style={styles.errorText}>{errors.eventName}</Text>}
-            <Picker
-              style={styles.input}
-              selectedValue={eventWork}
-              onValueChange={(itemValue) => setEventWork(itemValue)}
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={modalOpen}
+      onRequestClose={() => {
+        setModalOpen(false);
+      }}
+    >
+      <TouchableWithoutFeedback>
+        <View style={globalStyles.modalContent}>
+          <Text style={globalStyles.modalTitle}>Add Event</Text>
+          <ScrollView>
+            <Formik
+              initialValues={{
+                work: null,
+                company: null,
+                structure: null,
+                label: "",
+                description: "",
+                code: "",
+                location: "",
+                eventType: null,
+              }}
+              validationSchema={eventSchema}
+              onSubmit={(values, actions) => {
+                addEvent(values);
+                actions.resetForm();
+                setModalOpen(false);
+              }}
             >
-              <Picker.Item label="Select Work" value="" />
-              <Picker.Item label="Electrical Engineer" value="Electrical Engineer" />
-              <Picker.Item label="Mechanical Engineer" value="Mechanical Engineer" />
-            </Picker>
-            {errors.eventWork && <Text style={styles.errorText}>{errors.eventWork}</Text>}
-            <TextInput
-              style={styles.input}
-              placeholder="Event Description"
-              value={eventDescription}
-              onChangeText={setEventDescription}
-            />
-            {errors.eventDescription && <Text style={styles.errorText}>{errors.eventDescription}</Text>}
-            <TextInput
-              style={styles.input}
-              placeholder="Event Location"
-              value={eventLocation}
-              onChangeText={setEventLocation}
-            />
-            {errors.eventLocation && <Text style={styles.errorText}>{errors.eventLocation}</Text>}
-            <Button title="Cancel" onPress={onClose} />
-            <Button title="Next" onPress={handleNextStep} />
-            <Button title="Submit" onPress={handleSubmit} />
-          </View>
-        )}
-        {step === 2 && (
-          <View style={styles.formContainer}>
-            <Picker
-              style={styles.input}
-              selectedValue={eventType}
-              onValueChange={(itemValue) => setEventType(itemValue)}
-            >
-              <Picker.Item label="Select Type" value="" />
-              <Picker.Item label="Type 1" value="Type 1" />
-              <Picker.Item label="Type 2" value="Type 2" />
-              <Picker.Item label="Type 3" value="Type 3" />
-            </Picker>
-            {errors.eventType && <Text style={styles.errorText}>{errors.eventType}</Text>}
-            <TextInput
-              style={styles.input}
-              placeholder="Event Status"
-              value={eventStatus}
-              onChangeText={setEventStatus}
-            />
-            {errors.eventStatus && <Text style={styles.errorText}>{errors.eventStatus}</Text>}
-            <TextInput
-              style={styles.input}
-              placeholder="Event Duration"
-              value={eventDuration}
-              onChangeText={setEventDuration}
-            />
-            {errors.eventDuration && <Text style={styles.errorText}>{errors.eventDuration}</Text>}
-            <TextInput
-              style={styles.input}
-              placeholder="Event Causes"
-              value={eventCauses}
-              onChangeText={setEventCauses}
-            />
-            {errors.eventCauses && <Text style={styles.errorText}>{errors.eventCauses}</Text>}
-            <Button title="Previous" onPress={handlePreviousStep} />
-            <Button title="Submit" onPress={handleSubmit} />
-          </View>
-        )}
-      </View>
+              {(props) => (
+                <View>
+                  <Text style={globalStyles.label}>Work</Text>
+                  <Picker
+                    style={globalStyles.input}
+                    selectedValue={props.values.work}
+                    onValueChange={(value) => {
+                      if (value !== null) {
+                        props.handleChange("work")(value);
+                      }
+                    }}
+                  >
+                    <Picker.Item
+                      label="Select Work"
+                      value={null}
+                      enabled={false}
+                    />
+                    {workarray.map((item, index) => {
+                      return (
+                        <Picker.Item label={item} value={item} key={index} />
+                      );
+                    })}
+                  </Picker>
+                  <Text style={globalStyles.errorText}>
+                    {props.touched.work && props.errors.work}
+                  </Text>
+
+                  <Text style={globalStyles.label}>company</Text>
+                  <Picker
+                    style={globalStyles.input}
+                    selectedValue={props.values.company}
+                    onValueChange={(value) => {
+                      if (value !== null) {
+                        props.handleChange("company")(value);
+                      }
+                    }}
+                  >
+                    <Picker.Item
+                      label="Select company"
+                      value={null}
+                      enabled={false}
+                    />
+                    {companyarray.map((item, index) => {
+                      return (
+                        <Picker.Item label={item} value={item} key={index} />
+                      );
+                    })}
+                  </Picker>
+                  <Text style={globalStyles.errorText}>
+                    {props.touched.company && props.errors.company}
+                  </Text>
+
+                  <Text style={globalStyles.label}>Structure</Text>
+                  <Picker
+                    style={globalStyles.input}
+                    selectedValue={props.values.structure}
+                    onValueChange={(value) => {
+                      if (value !== null) {
+                        props.handleChange("structure")(value);
+                      }
+                    }}
+                  >
+                    <Picker.Item
+                      label="Select structure"
+                      value={null}
+                      enabled={false}
+                    />
+                    {structurearray.map((item, index) => {
+                      return (
+                        <Picker.Item label={item} value={item} key={index} />
+                      );
+                    })}
+                  </Picker>
+                  <Text style={globalStyles.errorText}>
+                    {props.touched.structure && props.errors.structure}
+                  </Text>
+
+                  <Text style={globalStyles.label}>Code</Text>
+                  <TextInput
+                    style={globalStyles.input}
+                    onChangeText={props.handleChange("code")}
+                    onBlur={props.handleBlur("code")}
+                    value={props.values.code}
+                    keyboardType="numeric"
+                  />
+                  <Text style={globalStyles.errorText}>
+                    {props.touched.code && props.errors.code}
+                  </Text>
+
+                  <Text style={globalStyles.label}>Label</Text>
+                  <TextInput
+                    style={globalStyles.input}
+                    onChangeText={props.handleChange("label")}
+                    onBlur={props.handleBlur("label")}
+                    value={props.values.label}
+                  />
+                  <Text style={globalStyles.errorText}>
+                    {props.touched.label && props.errors.label}
+                  </Text>
+
+                  <Text style={globalStyles.label}>Description </Text>
+                  <TextInput
+                    style={globalStyles.input}
+                    multiline
+                    onChangeText={props.handleChange("description")}
+                    onBlur={props.handleBlur("description")}
+                    value={props.values.description}
+                  />
+                  <Text style={globalStyles.errorText}>
+                    {props.touched.description && props.errors.description}
+                  </Text>
+
+                  <Text style={globalStyles.label}>Location </Text>
+                  <TextInput
+                    style={globalStyles.input}
+                    onChangeText={props.handleChange("location")}
+                    onBlur={props.handleBlur("location")}
+                    value={props.values.location}
+                  />
+                  <Text style={globalStyles.errorText}>
+                    {props.touched.location && props.errors.location}
+                  </Text>
+
+                  <Text style={globalStyles.label}>Event Type </Text>
+                  <Picker
+                    style={globalStyles.input}
+                    selectedValue={props.values.eventType}
+                    onValueChange={(value) => {
+                      if (value !== null) {
+                        props.handleChange("eventType")(value);
+                      }
+                    }}
+                  >
+                    <Picker.Item
+                      label="Select Event Type"
+                      value={null}
+                      enabled={false}
+                    />
+                    {eventType.map((item, index) => {
+                      return (
+                        <Picker.Item label={item} value={item} key={index} />
+                      );
+                    })}
+                  </Picker>
+                  <Text style={globalStyles.errorText}>
+                    {props.touched.eventType && props.errors.eventType}
+                  </Text>
+
+                  <View style={globalStyles.switchContainer}>
+                    <Text style={globalStyles.switchLabel}>
+                      Additional Information
+                    </Text>
+                    <Switch
+                      trackColor={{ false: "#767577", true: "#81b0ff" }}
+                      thumbColor={isEnabled ? "#f5dd4b" : "#f4f3f4"}
+                      ios_backgroundColor="#3e3e3e"
+                      onValueChange={toggleSwitch}
+                      value={isEnabled}
+                    />
+                  </View>
+
+                  {isEnabled && (
+                    <>
+                      <Text style={globalStyles.label}>Event Status</Text>
+                      <Picker
+                        style={globalStyles.input}
+                        selectedValue={props.values.eventStatus}
+                        onValueChange={(value) => {
+                          if (value !== null) {
+                            props.handleChange("eventStatus")(value);
+                          }
+                        }}
+                      >
+                        <Picker.Item
+                          label="Select Event Status"
+                          value={null}
+                          enabled={false}
+                        />
+                        {eventStatus.map((item, index) => {
+                          return (
+                            <Picker.Item
+                              label={item}
+                              value={item}
+                              key={index}
+                            />
+                          );
+                        })}
+                      </Picker>
+                      <Text style={globalStyles.errorText}>
+                        {props.touched.eventStatus && props.errors.eventStatus}
+                      </Text>
+                    </>
+                  )}
+
+                  <View style={globalStyles.buttonContainer}>
+                    <Button
+                      color="maroon"
+                      title="Cancel"
+                      onPress={() => {
+                        props.resetForm();
+                        setModalOpen(false);
+                      }}
+                    />
+                    <Button
+                      color="maroon"
+                      title="Submit"
+                      onPress={props.handleSubmit}
+                    />
+                  </View>
+                  {/* Render your form fields here */}
+                </View>
+              )}
+            </Formik>
+          </ScrollView>
+        </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    
-  },
-  formContainer: {
-    width: '90%',
-    paddingHorizontal: 20,
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 20,
-  },
-  input: {
-    backgroundColor: '#e0e0e0',
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 10,
-  },
-  errorText: {
-    color: 'red',
-    marginBottom: 10,
-  },
-});
 
 export default EventModal;

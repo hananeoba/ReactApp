@@ -1,6 +1,9 @@
+// EventScreen.js
 import React, { useState } from 'react';
 import { SafeAreaView, Text, TouchableOpacity } from 'react-native';
-import EventModal from './EventModal'; // Assuming the EventModal component is in the same directory
+import EventModal from '../components/EventModal'; // Assuming the EventModal component is in the same directory
+import LinearGradient from '../components/LinearGradient';
+
 
 const EventScreen = () => {
   const [modalOpen, setModalOpen] = useState(false);
@@ -12,7 +15,9 @@ const EventScreen = () => {
   };
 
   return (
+    <LinearGradient>
     <SafeAreaView>
+
       <Text>Event Screen</Text>
       <TouchableOpacity onPress={() => setModalOpen(true)}>
         <Text>Add Event</Text>
@@ -22,9 +27,9 @@ const EventScreen = () => {
       <EventModal
         modalOpen={modalOpen}
         setModalOpen={setModalOpen}
-        addEvent={addEvent}
       />
     </SafeAreaView>
+    </LinearGradient>
   );
 };
 

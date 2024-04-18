@@ -1,19 +1,39 @@
 import axios from "axios";
 import { useState, useEffect, createContext } from "react";
+import { StyleSheet } from "react-native";
 import React from "react";
 import { BaseURL } from "../config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { jwtDecode } from "jwt-decode";
-import {decode} from 'base-64';
+import { decode } from "base-64";
 global.atob = decode;
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [authUser, setUser] = useState({});
-  const [authToken, setAuthToken] = useState(null);
-
+  const [authToken, setAuthToken] = useState({});
+  const [token, setToken] = useState(""); //[authToken.access,authToken.refresh
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoggedIn,setIsLoggedIn]= useState(false);
+  const checkStorageToken = async () => {
+    try {
+      const access = await AsyncStorage.getItem("access");
+      const refresh = await AsyncStorage.getItem("refresh");
+      if (access && refresh) {
+        setIsLoggedIn(true);
+      } else {
+        setIsLoggedIn(false);
+      }
+    } catch (error) {
+      console.error("Error checking storage tokens:", error);
+    }
+  };
+
+  useEffect(() => {
+    checkStorageToken();
+  }, []);
+
 
   const login = (user, password) => {
     setIsLoading(true);
@@ -22,38 +42,55 @@ export const AuthProvider = ({ children }) => {
         user_name: user,
         password: password,
       })
-      .then((response) => {
-        data= JSON.stringify(response.data.access);
-        user= (jwtDecode(data)) ;
+      .then(async (response) => {
+        const data = JSON.stringify(response.data.access);
+        const user = jwtDecode(data);
         setUser(user);
         setAuthToken(response.data);
-        AsyncStorage.setItem("authToken", JSON.stringify(authToken));
+        const setToken = [
+          ['refresh', response.data.refresh],
+          ['access', response.data.access],
+        ];
+        await AsyncStorage.multiSet(setToken);
+        checkStorageToken();
         setIsLoading(false);
       })
       .catch((error) => {
-        alert("Invalid credentials");
-        console.log(`RegisterError: ${error}`);
+        alert(`LoginError: ${error}`);
+        console.log(`loginError: ${error}`);
         setIsLoading(false);
       });
   };
-  const logout = () => {
-    axios.post(`${BaseURL}/api/user/logout/`,{refresh:authToken.refresh})
-    .then((response) => {
-      console.log(" response", response.status);
-      AsyncStorage.removeItem("authToken");
-      setUser({});
-      setAuthToken(null);
-    })
-    .catch((error) => {
-      alert("Logout failed", error);
-      console.log(`LogoutError: ${error}`);
-    });
-    
-  };
+  
 
+  const logout = async () => {
+    try {
+      axios.post(`${BaseURL}/api/user/logout/`, {
+        refresh: authToken.refresh,
+      });
+      await AsyncStorage.multiRemove(['refresh', 'access']);
+      setUser({});
+      setAuthToken({});
+      checkStorageToken();
+    } catch (error) {
+      alert(`LogoutError: ${error}`);
+    }
+  };
+  data ={
+    login,
+    logout,
+    setIsLoading,
+    setIsLoggedIn,
+    isLoading,
+    isLoggedIn,
+    authToken,
+    authUser
+  }
 
   return (
-    <AuthContext.Provider value={{ login, logout, setIsLoading, isLoading, authToken, authUser }}>
+    <AuthContext.Provider
+      value={data}
+    >
       {children}
     </AuthContext.Provider>
   );
