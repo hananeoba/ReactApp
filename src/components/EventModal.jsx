@@ -20,8 +20,9 @@ import axios from "axios";
 import { BaseURL } from "../config";
 import { useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext";
+import fetchWork from "../api/fetchWork.jsx";
 
-const eventSchema = yup.object({
+const eventSchema = yup.object().shape({
   work: yup.string().required(),
   company: yup.string().required(),
   structure: yup.string().required(),
@@ -48,8 +49,7 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isEnabled, setIsEnabled] = useState(false);
 
-  useEffect(() => {
-  }, []);
+  
 
   useEffect(() => {
   }, []);
@@ -110,14 +110,15 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
           <ScrollView>
             <Formik
               initialValues={{
-                work: null,
-                company: null,
-                structure: null,
+                work: 0,
+                company: 0,
+                structure: 0,
+                installation:0,
                 label: "",
                 description: "",
                 code: "",
                 location: "",
-                eventType: null,
+                eventType: 0,
               }}
               validationSchema={eventSchema}
               onSubmit={(values, actions) => {
@@ -136,11 +137,14 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
                       if (value !== null) {
                         props.handleChange("work")(value);
                       }
+                      else{
+                        alert(`${value} this value is null `)
+                      }
                     }}
                   >
                     <Picker.Item
                       label="Select Work"
-                      value={null}
+                      value={0}
                       enabled={false}
                     />
                     {workarray.map((item, index) => {

@@ -1,1 +1,1 @@
-export const BaseURL = "https://5d9e-105-103-174-82.ngrok-free.app"
+export const BaseURL = "http://192.168.1.3:8000"

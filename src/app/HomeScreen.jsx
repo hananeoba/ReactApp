@@ -12,87 +12,115 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import ChartComponent from "../components/chart";
 import LoginScreen from "./LoginScreen";
+import fetchWork from "../api/fetchWork";
 
 export default function HomeScreen() {
   // Fetch events this week
-  const { isLoading, authUser, authToken, setIsLoading, checkStorageToken } =
-    useContext(AuthContext);
+  const {
+    isLoading,
+    authUser,
+    authToken,
+    setIsLoading,
+    isLoggedIn,
+    checkStorageToken,
+  } = useContext(AuthContext);
   const [eventWeek, setEventWeek] = useState([]);
   const [eventMonth, setEventMonth] = useState([]);
   const [token, setToken] = useState({});
   const [countw, setCountW] = useState(0);
   const [countm, setCountM] = useState(0);
-
+  let result = { acess: null, refresh: null };
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       await AsyncStorage.getItem("access")
-        .then((value) => {
-          setToken(value);
+        .then(async (value) => {
+          if (value !== null) {
+            setToken(value);
+            try {
+              const response = await axios.get(
+                `${BaseURL}/api/events/by-week/`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${value}`,
+                  },
+                }
+              );
+
+              if (response.data) {
+                const eventCounts = response.data.map((event) => event.count);
+                setEventWeek(eventCounts);
+                setIsLoading(false);
+              } else {
+                // If response.data is falsy or empty, set event counts to zero for each week
+                setEventWeek([null, null, null, null, null, null, null]);
+                setIsLoading(false);
+              }
+            } catch (error) {
+              console.error("Error fetching week data:", error);
+              setIsLoading(false);
+            }
+          }
         })
         .catch((error) => {
           alert("Token not found", error);
         });
-
-      //const obj_token = JSON.parse().access;
-      try {
-        const response = await axios.get(`${BaseURL}/api/events/by-week/`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (response && response.data) {
-          const eventCounts = response.data.map((event) => event.count);
-          setEventWeek(eventCounts);
-          
-          setIsLoading(false);
-        } else {
-          // If response.data is falsy or empty, set event counts to zero for each week
-          setEventWeek([0, 0, 0, 0, 0, 0, 0]);
-          setIsLoading(false);
-        }
-        setCountW(eventWeek.reduce((accumulator, currentValue) => accumulator + currentValue, 0))
-      } catch (error) {
-        console.error("Error fetching week data:", error);
-        setIsLoading(false);
-      }
     };
+    setCountW(
+      eventWeek.reduce(
+        (accumulator, currentValue) => accumulator + currentValue,
+        0
+      )
+    );
     fetchData();
-  }, []);
+  }, [isLoggedIn]);
 
   useEffect(() => {
     const fetchMonthData = async () => {
       await AsyncStorage.getItem("access")
-        .then((value) => {
-          console.log("access:", value);
+        .then(async (value) => {
           setToken(value);
+          try {
+            const response = await axios.get(
+              `${BaseURL}/api/events/by-month/`,
+              {
+                headers: {
+                  Authorization: `Bearer ${value}`,
+                },
+              }
+            );
+
+            if (response.data) {
+              const eventCounts = response.data.map((event) => event.count);
+              setEventMonth(eventCounts);
+              setIsLoading(false);
+            } else {
+              // If response.data is falsy or empty, set event counts to zero for each week
+              setEventMonth([
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+              ]);
+              setCountM(null);
+              setIsLoading(false);
+            }
+          } catch (error) {
+            console.error("Error fetching month data:", error);
+            setIsLoading(false);
+          }
         })
         .catch((error) => {
           alert("Token not found", error);
         });
-      //const obj_token = JSON.parse(token).access;
-      try {
-        const response = await axios.get(`${BaseURL}/api/events/by-month/`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-      
-        if (response && response.data) {
-          const eventCounts = response.data.map((event) => event.count);
-          setEventMonth(eventCounts);
-          setIsLoading(false);
-        } else {
-          // If response.data is falsy or empty, set event counts to zero for each week
-          setEventMonth([0, 0, 0, 0, 0, 0, 0,0,0,0,0,0]);
-          setIsLoading(false);
-        }
-        setCountM(eventMonth.reduce((accumulator, currentValue) => accumulator + currentValue, 0))
-      } catch (error) {
-        console.error("Error fetching week data:", error);
-        setIsLoading(false);
-      }
     };
     fetchMonthData();
   }, []);
@@ -113,7 +141,21 @@ export default function HomeScreen() {
     "Nov",
     "Dec",
   ];
-  
+  useEffect(() => {
+    setCountW(
+      eventWeek.reduce(
+        (accumulator, currentValue) => accumulator + currentValue,
+        0
+      )
+    );
+    setCountM(
+      eventMonth.reduce(
+        (accumulator, currentValue) => accumulator + currentValue,
+        0
+      )
+    );
+  }, [eventWeek, eventMonth]);
+
   return (
     <View style={styles.container}>
       <LinearGradient>
@@ -125,7 +167,7 @@ export default function HomeScreen() {
         <SafeAreaView style={styles.content}>
           <Text style={styles.greetingText}>Events this week: {countw}</Text>
           <ChartComponent datata={eventWeek} labels={days} />
-          <Text style={styles.greetingText}>Events this month: {countm}</Text>
+          <Text style={styles.greetingText}>Events this year: {countm}</Text>
           <ChartComponent datata={eventMonth} labels={months} />
         </SafeAreaView>
       </LinearGradient>

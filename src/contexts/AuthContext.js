@@ -13,7 +13,6 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [authUser, setUser] = useState({});
   const [authToken, setAuthToken] = useState({});
-  const [token, setToken] = useState(""); //[authToken.access,authToken.refresh
   const [isLoading, setIsLoading] = useState(false);
   const [isLoggedIn,setIsLoggedIn]= useState(false);
   const checkStorageToken = async () => {
@@ -22,6 +21,7 @@ export const AuthProvider = ({ children }) => {
       const refresh = await AsyncStorage.getItem("refresh");
       if (access && refresh) {
         setIsLoggedIn(true);
+        return(access)
       } else {
         setIsLoggedIn(false);
       }
@@ -81,6 +81,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     setIsLoading,
     setIsLoggedIn,
+    checkStorageToken,
     isLoading,
     isLoggedIn,
     authToken,
