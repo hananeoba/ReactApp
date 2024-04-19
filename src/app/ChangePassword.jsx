@@ -7,7 +7,7 @@ import {
   StyleSheet,
   TextInput,
 } from "react-native";
-import { Formik, useFormik } from "formik";
+import { Formik } from "formik";
 import * as Yup from "yup";
 
 const ChangePassword = () => {
@@ -16,12 +16,16 @@ const ChangePassword = () => {
     newPssword: "",
     confirmPassword: "",
   };
-  let validationSchema = Yup.object({
+  const validationSchema = Yup.object({
     currentPassword: Yup.string().required("Required"),
     newPassword: Yup.string()
       .required("Required")
       .min(15, "Must be atleast 15 charecters"),
-    confirmPassword: Yup.string().required("Required"),
+    confirmPassword: Yup.string()
+      .required("Required")
+      .test("password-match", "password must match ", function(value){
+        return this.parent.newPassword=== value
+      }),
   });
   return (
     <LinearGradient>
