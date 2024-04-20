@@ -11,8 +11,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 // Fetching data using Axios in React Native
 import axios from "axios";
 import ChartComponent from "../components/chart";
-import LoginScreen from "./LoginScreen";
-import fetchWork from "../api/fetchWork";
+
 
 export default function HomeScreen() {
   // Fetch events this week
@@ -29,7 +28,6 @@ export default function HomeScreen() {
   const [token, setToken] = useState({});
   const [countw, setCountW] = useState(0);
   const [countm, setCountM] = useState(0);
-  let result = { acess: null, refresh: null };
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);

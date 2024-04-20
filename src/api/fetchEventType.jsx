@@ -1,46 +1,41 @@
 import axios from "axios";
 import { BaseURL } from "../config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createContext, useState } from "react";
+import { useContext, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import { decode } from "base-64";
+import AuthContext from "../contexts/AuthContext";
 global.atob = decode;
 
-import { View, Text } from "react-native";
-import React from "react";
-
-export default function fetchCauses(props) {
-  if (props.company) {
-    axios.get(`${BaseURL}/api/basedata/event_type/all`,
-        { 
-        params:{
-            compant_id: props.company
-        },
-        headers: {  
-            Authorization: `Bearer ${authToken.access}`,
-        },
+const {setCompanyArray}= useContext(AuthContext);
+const  fetchCompany= async(props) =>{
+  await AsyncStorage.getItem("access").then((access)=>{
+    axios.get(`${BaseURL}/api/basedata/company/all`,
+    { 
+    params:{
+        installation_id: props.installation
+    },
+    headers: {  
+        Authorization: `Bearer ${access}`,
+    },
+})
+    .then((response) => {
+      const companyArray = response.data.map((company) => {
+        return {
+          key: company.id,
+          value: company.label,
+        };
+      });
+      console.log(companyArray);
+      setCompanyArray(companyArray);
+      console.log(companyArray);
+      return response.data
     })
-        .then((response) => {
-          console.log(response.data)
-          return response.data
-        })
-        .catch((error) => {
-          alert(`Error fetching causes: ${error}`);
-        });
-  }
-  else {
-    axios.get(`${BaseURL}/api/basedata/event_type/all`,
-        { 
-        headers: {  
-            Authorization: `Bearer ${authToken.access}`,
-            },
-    })
-        .then((response) => {
-          console.log(response.data)
-          return response.data
-        })
-        .catch((error) => {
-          alert(`Error fetching causes: ${error}`);
-        });
-  }
+    .catch((error) => {
+      alert(`Error fetching company: ${error}`);
+    });
+  }).catch((err)=>{
+    alert(`${err} could not find token `)
+  });
 }
+export {fetchCompany};

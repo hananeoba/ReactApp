@@ -7,9 +7,7 @@ import fetchWork from '../api/fetchWork';
 
 
 const EventScreen = () => {
-  useEffect(() => {
-    fetchWork();
-  }, []);
+
   const [modalOpen, setModalOpen] = useState(false);
 
   // Function to add event
@@ -21,7 +19,6 @@ const EventScreen = () => {
   return (
     <LinearGradient>
     <SafeAreaView>
-
       <Text>Event Screen</Text>
       <TouchableOpacity onPress={() => setModalOpen(true)}>
         <Text>Add Event</Text>

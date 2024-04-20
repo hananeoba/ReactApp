@@ -11,17 +11,22 @@ global.atob = decode;
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+  const [companyArray, setCompanyArray] = useState([]);
+  const [structureArray, setStructureArray] = useState([]);
+  const [installationArray, setInstallationArray] = useState([]);
+  const [workArray, setWorkArray] = useState([]);
+  const [causesArray, setCausesArray] = useState([]);
   const [authUser, setUser] = useState({});
   const [authToken, setAuthToken] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoggedIn,setIsLoggedIn]= useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const checkStorageToken = async () => {
     try {
       const access = await AsyncStorage.getItem("access");
       const refresh = await AsyncStorage.getItem("refresh");
       if (access && refresh) {
         setIsLoggedIn(true);
-        return(access)
+        return access;
       } else {
         setIsLoggedIn(false);
       }
@@ -33,7 +38,6 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     checkStorageToken();
   }, []);
-
 
   const login = (user, password) => {
     setIsLoading(true);
@@ -48,8 +52,8 @@ export const AuthProvider = ({ children }) => {
         setUser(user);
         setAuthToken(response.data);
         const setToken = [
-          ['refresh', response.data.refresh],
-          ['access', response.data.access],
+          ["refresh", response.data.refresh],
+          ["access", response.data.access],
         ];
         await AsyncStorage.multiSet(setToken);
         checkStorageToken();
@@ -61,14 +65,13 @@ export const AuthProvider = ({ children }) => {
         setIsLoading(false);
       });
   };
-  
 
   const logout = async () => {
     try {
       axios.post(`${BaseURL}/api/user/logout/`, {
         refresh: authToken.refresh,
       });
-      await AsyncStorage.multiRemove(['refresh', 'access']);
+      await AsyncStorage.multiRemove(["refresh", "access"]);
       setUser({});
       setAuthToken({});
       checkStorageToken();
@@ -76,25 +79,31 @@ export const AuthProvider = ({ children }) => {
       alert(`LogoutError: ${error}`);
     }
   };
-  data ={
+  data = {
+    
+
     login,
     logout,
     setIsLoading,
     setIsLoggedIn,
+    setWorkArray,
+    setInstallationArray,
+    setCompanyArray,
+    setStructureArray,
+    setCausesArray,
     checkStorageToken,
     isLoading,
     isLoggedIn,
     authToken,
-    authUser
-  }
+    authUser,
+    workArray,
+    installationArray,
+    companyArray,
+    structureArray,
+    causesArray,
+  };
 
-  return (
-    <AuthContext.Provider
-      value={data}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={data}>{children}</AuthContext.Provider>;
 };
 
 export default AuthContext;

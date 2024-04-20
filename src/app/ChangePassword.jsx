@@ -7,6 +7,7 @@ import {
   StyleSheet,
   TextInput,
 } from "react-native";
+import { globalStyles } from "../styles/global";
 import { Formik } from "formik";
 import * as Yup from "yup";
 
@@ -44,6 +45,7 @@ const ChangePassword = () => {
               onChangeText={handleChange("currentPassword")}
               onBlur={handleBlur("currentPassword")}
               placeholder="Enter your current password"
+              secureTextEntry={true}
               style={styles.input}
             />
             <Text style={styles.errorText}>{errors.currentPassword}</Text>
@@ -52,6 +54,7 @@ const ChangePassword = () => {
               onChangeText={handleChange("newPassword")}
               onBlur={handleBlur("newPassword")}
               placeholder="Enter your new password"
+              secureTextEntry={true}
               style={styles.input}
             />
             <Text style={styles.errorText}>{errors.newPassword}</Text>
@@ -60,6 +63,7 @@ const ChangePassword = () => {
               onChangeText={handleChange("confirmPassword")}
               onBlur={handleBlur("confirmPassword")}
               placeholder="Confirm your new password"
+              secureTextEntry={true}
               style={styles.input}
             />
             <Text style={styles.errorText}>{errors.confirmPassword}</Text>
@@ -81,10 +85,12 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
+    padding: 10,
+    fontSize: 18,
+    borderRadius: 10,
+    width: 300,
+    borderWidth: 1,
     borderColor: "#777",
-    padding: 5,
-    margin: 5,
-    width: 200,
     backgroundColor: "#FFF", // Optional: Add a background color to input fields
     borderRadius: 10, // Optional: Add border radius for input fields
   },
