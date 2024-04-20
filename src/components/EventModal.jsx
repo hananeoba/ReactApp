@@ -19,31 +19,30 @@ import { globalStyles } from "../styles/global";
 import { Formik } from "formik";
 import * as yup from "yup";
 import { Picker } from "@react-native-picker/picker";
+
 import axios from "axios";
 import { BaseURL } from "../config";
 import { useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext";
-import { SelectList } from "react-native-dropdown-select-list";
+import {
+  SelectList,
+  MultipleSelectList,
+} from "react-native-dropdown-select-list";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import MyDateTimePicker from "./dateTimePicker";
 
 const eventSchema = yup.object({
   work: yup.string().required(),
-  company: yup.string().required(),
-  structure: yup.string().required(),
-  installation: yup.string().required(),
   label: yup.string().required().min(4),
   description: yup.string().required().min(8),
   code: yup.string().required().max(6),
-  //location: yup.string().required().min(4),
   eventType: yup.string().required(),
   start_date: yup.string().required(),
 });
 
 const EventModal = ({ modalOpen, setModalOpen }) => {
-  const { authToken } = useContext(AuthContext);
   const [startDate, setStartDate] = useState(new Date());
-  const [date, setDate]=  useState("" );
+  const [date, setDate] = useState("");
   const [eventTArray, setEventTArray] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEnabled, setIsEnabled] = useState(false);
@@ -52,29 +51,20 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
   const [installationArray, setInstallationArray] = useState([]);
   const [workArray, setWorkArray] = useState([]);
   const [causesArray, setCausesArray] = useState([]);
+  const [causes, setCauses] = useState([]);
+  const [causes2, setCauses2] = useState([]);
   const [isTouched, setIsTouched] = useState(false);
 
   const toggleSwitch = () => {
     setIsEnabled((previousState) => !previousState);
     if (!isEnabled) {
-     
     }
   };
   const toggleDatePicker = () => {
     setIsTouched(!isTouched);
   };
 
-  const eventType = [1, 2, 3, 4, 5, 6];
   const eventStatus = ["fixed", "discovered", "mid-way"];
-  const formatDate =(rawDate)=>{
-    let Date = new Date(rawDate);
-    let Year = Date.getFullYear();
-    let Month = Date.getMonth()+1;
-    let Day = Date.getDay();
-    return `${Year}-${Month}-${Day}`
-
-  }
-
 
   const addEvent = async (values) => {
     await AsyncStorage.getItem("access").then((access) => {
@@ -82,11 +72,11 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
         .post(
           `${BaseURL}/api/events/create/`,
           {
-            work: { id: parseInt(values.work)},
+            work: { id: parseInt(values.work) },
             event_type: { id: parseInt(values.eventType) },
             event_status: "Status of the event",
             event_duration: values.event_duration,
-            event_causes: [{ id: 1 }],
+            event_causes:causes2,
             code: values.code,
             label: values.label,
             start_date: date,
@@ -106,7 +96,7 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
         });
     });
   };
-  const fetchEventT=async(props)=>{
+  const fetchEventT = async (company) => {
     await AsyncStorage.getItem("access").then(async (val) => {
       try {
         const response = axios({
@@ -119,7 +109,7 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
           },
           data: {},
           params: {
-            company_id: props.company,
+            company_id: company,
           },
         }).then((value) => {
           const eventTarray = value.data.map((eventT) => {
@@ -128,17 +118,45 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
               value: eventT.label,
             };
           });
-          console.log(eventTarray ,"this is response");
           setEventTArray(eventTarray);
-          console.log(eventTArray, "this is the array ");
         });
       } catch (error) {
         console.error("Error fetching event type data:", error);
         setIsLoading(false);
       }
     });
-  }
-  const fetchWork = async (props) => {
+  };
+  const fetchCauses = async (event_t) => {
+    await AsyncStorage.getItem("access").then(async (val) => {
+      try {
+        const response = axios({
+          method: "GET",
+          url: `${BaseURL}/api/basedata/causes/all/`,
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${val}`,
+          },
+          data: {},
+          params: {
+            event_type_id: event_t,
+          },
+        }).then((value) => {
+          const causesarray = value.data.map((causes) => {
+            return {
+              key: JSON.stringify(causes.id),
+              value: causes.label,
+            };
+          });
+          setCausesArray(causesarray);
+        });
+      } catch (error) {
+        console.error("Error fetching event type data:", error);
+        setIsLoading(false);
+      }
+    });
+  };
+  const fetchWork = async (installation) => {
     await AsyncStorage.getItem("access").then(async (val) => {
       try {
         const response = axios({
@@ -151,7 +169,7 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
           },
           data: {},
           params: {
-            installation_id: props.installation,
+            installation_id: installation,
           },
         }).then((value) => {
           const workarray = value.data.map((work) => {
@@ -160,9 +178,7 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
               value: work.label,
             };
           });
-          console.log(workarray);
           setWorkArray(workarray);
-          console.log(workArray);
         });
       } catch (error) {
         console.error("Error fetching work data:", error);
@@ -171,7 +187,7 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
     });
   };
 
-  const fetchStructure = async (props) => {
+  const fetchStructure = async (company) => {
     await AsyncStorage.getItem("access").then(async (val) => {
       try {
         const response = axios({
@@ -184,7 +200,7 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
           },
           data: {},
           params: {
-            company_id: props.company,
+            company_id: company,
           },
         }).then((value) => {
           const structurearray = value.data.map((structure) => {
@@ -193,9 +209,7 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
               value: structure.label,
             };
           });
-          console.log(structurearray);
           setStructureArray(structurearray);
-          console.log(structureArray);
         });
       } catch (error) {
         console.error("Error fetching structure data:", error);
@@ -203,7 +217,7 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
       }
     });
   };
-  const fetchinstallation = async (props) => {
+  const fetchinstallation = async (structure) => {
     await AsyncStorage.getItem("access").then(async (val) => {
       try {
         const response = axios({
@@ -216,7 +230,7 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
           },
           data: {},
           params: {
-            structure_id: props.structure,
+            structure_id: structure,
           },
         }).then((value) => {
           const installationarray = value.data.map((installation) => {
@@ -225,9 +239,7 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
               value: installation.label,
             };
           });
-          console.log(installationarray);
           setInstallationArray(installationarray);
-          console.log(installationArray);
         });
       } catch (error) {
         console.error("Error fetching installation data:", error);
@@ -252,9 +264,7 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
                   value: company.label,
                 };
               });
-              console.log(companyArray);
               setCompanyArray(companyArray);
-              console.log(companyArray);
             });
         } catch (error) {
           console.error("Error fetching company data:", error);
@@ -268,8 +278,8 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
     fetchWork("");
     fetchinstallation("");
     fetchEventT("");
+    fetchCauses("");
   }, []);
-  useEffect(() => {}, []);
 
   return (
     <Modal
@@ -290,6 +300,7 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
                 company: null,
                 structure: null,
                 eventType: null,
+                causes: [{}],
                 label: "",
                 description: "",
                 code: "",
@@ -302,8 +313,8 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
               onSubmit={(values, actions) => {
                 console.log("submitted");
                 addEvent(values);
-               actions.resetForm();
-                actions.setSubmitting(false)
+                actions.resetForm();
+                actions.setSubmitting(false);
                 setModalOpen(false);
               }}
             >
@@ -331,12 +342,60 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
                     {props.touched.label && props.errors.label}
                   </Text>
 
+                  <Text style={globalStyles.label}>Start Date</Text>
+                  {isTouched && (
+                    <DateTimePicker
+                      mode="date"
+                      display="spinner"
+                      value={startDate}
+                      onChange={({ type }, currentDate) => {
+                        if (type === "set") {
+                          setStartDate(currentDate);
+                          setDate(currentDate.toISOString().split("T")[0]);
+                          props.handleChange("start_date")(
+                            currentDate.toISOString().split("T")[0]
+                          );
+                          console.log("props date", props.values.start_date);
+                          if (Platform.OS === "android") {
+                            console.log(props.values);
+                            setIsTouched(false);
+                          }
+                        } else {
+                          toggleDatePicker();
+                        }
+                      }}
+                    />
+                  )}
+                  {!isTouched && (
+                    <Pressable
+                      onPress={() => {
+                        toggleDatePicker();
+                      }}
+                    >
+                      <TextInput
+                        style={globalStyles.input}
+                        placeholder={startDate.toISOString().split("T")[0]}
+                        onChangeText={() => {
+                          props.handleChange("start_date");
+                        }}
+                        onBlur={() => {
+                          props.handleBlur("start_date");
+                        }}
+                        value={startDate.toISOString()}
+                        editable={false}
+                      />
+                    </Pressable>
+                  )}
+                  <Text style={globalStyles.errorText}>
+                    {props.errors["start_date"]}
+                  </Text>
+
                   <Text style={globalStyles.label}>Company</Text>
                   <SelectList
                     setSelected={(val) => {
                       props.handleChange("company")(val);
                       fetchStructure(parseInt(val));
-                      fetchEventT(parseInt(val))
+                      fetchEventT(parseInt(val));
                     }}
                     data={companyArray}
                     save="key"
@@ -344,21 +403,6 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
                   <Text style={globalStyles.errorText}>
                     {props.touched.company && props.errors.company}
                   </Text>
-
-
-                  <Text style={globalStyles.label}>Event Type </Text>
-                  <SelectList
-                    setSelected={(val) => {
-                      props.handleChange("eventType")(val);
-                      
-                    }}
-                    data={eventTArray}
-                    save="key"
-                  />
-                  <Text style={globalStyles.errorText}>
-                    {props.touched.eventType && props.errors.eventType}
-                  </Text>
-                  
 
                   <Text style={globalStyles.label}>Structure</Text>
                   <SelectList
@@ -394,51 +438,32 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
                     {props.touched.work && props.errors.work}
                   </Text>
 
-
-                  <Text style={globalStyles.label}>Start Date</Text>
-                  {isTouched && (
-                    <DateTimePicker
-                      mode="date"
-                      display="spinner"
-                      value={startDate}
-                      onChange={({ type }, currentDate) => {
-                        if (type === "set") {
-                          console.log("the time ");
-                          setStartDate(currentDate);
-                          setDate(currentDate.toISOString().split('T')[0]);
-                          props.handleChange("start_date")(currentDate.toString())
-                          console.log("start date  ", startDate);
-                          if (Platform.OS === "android") {
-                            console.log(props.values);
-                            setIsTouched(false);
-                          }
-                        } else {
-                          toggleDatePicker();
-                        }
-                      }}
-                    />
-                  )}
-                  {!isTouched && (
-                    <Pressable
-                      onPress={() => {
-                        toggleDatePicker();
-                      }}
-                    >
-                      <TextInput
-                        style={globalStyles.input}
-                        placeholder={startDate.toString()}
-                        onChangeText={() => {props.handleChange("start_date");}}
-                        onBlur={() => {props.handleBlur("start_date");
-                        }}
-                        value={startDate.toString()}
-                        editable={false}
-                      />
-                    </Pressable>
-                  )}
+                  <Text style={globalStyles.label}>Event Type </Text>
+                  <SelectList
+                    setSelected={(val) => {
+                      props.handleChange("eventType")(val);
+                    }}
+                    data={eventTArray}
+                    save="key"
+                  />
                   <Text style={globalStyles.errorText}>
-                    {props.errors["start_date"]}
+                    {props.touched.eventType && props.errors.eventType}
                   </Text>
+                  <Text style={globalStyles.label}>Event Causes </Text>
+                  <MultipleSelectList
+                    setSelected={(val) => {
+                      setCauses(val);
+                    }}
+                    onSelect={() => {
+                      console.log(causes);
+                      setCauses2(causes.map((val)=>{return({"id":val})}))
+                      console.log(causes2);
 
+                    }}
+                    data={causesArray}
+                    save="key"
+                    label="causes"
+                  />
                   <Text style={globalStyles.label}>Description </Text>
                   <TextInput
                     style={globalStyles.input}
@@ -450,7 +475,6 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
                   <Text style={globalStyles.errorText}>
                     {props.touched.description && props.errors.description}
                   </Text>
-
 
                   <View style={globalStyles.switchContainer}>
                     <Text style={globalStyles.switchLabel}>
@@ -502,10 +526,12 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
                     <Button
                       color="maroon"
                       title="Cancel"
-                      onPress={()=>
-                        {props.handleSubmit()}
-                        
-                      }
+                      onPress={() => {
+                        props.resetForm();
+                        setCauses([]);
+                        setCauses2([]);
+                        setModalOpen(false);
+                      }}
                     />
                     <Button
                       color="maroon"
