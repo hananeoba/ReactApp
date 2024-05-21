@@ -15,11 +15,9 @@ import {
   Switch,
   Platform,
 } from "react-native";
-import { globalStyles } from "../styles/global";
+import { globalColors, globalStyles } from "../styles/global";
 import { Formik } from "formik";
 import * as yup from "yup";
-import { Picker } from "@react-native-picker/picker";
-
 import axios from "axios";
 import { BaseURL } from "../config";
 import { useContext } from "react";
@@ -29,15 +27,13 @@ import {
   MultipleSelectList,
 } from "react-native-dropdown-select-list";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import MyDateTimePicker from "./dateTimePicker";
 
 const eventSchema = yup.object({
   work: yup.string().required(),
-  label: yup.string().required().min(4),
-  description: yup.string().required().min(8),
-  code: yup.string().required().max(6),
+  description: yup.string().required(),
   eventType: yup.string().required(),
   start_date: yup.string().required(),
+  causes: yup.array().required(),
 });
 
 const EventModal = ({ modalOpen, setModalOpen }) => {
@@ -46,25 +42,18 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
   const [eventTArray, setEventTArray] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEnabled, setIsEnabled] = useState(false);
-  const [companyArray, setCompanyArray] = useState([]);
-  const [structureArray, setStructureArray] = useState([]);
   const [installationArray, setInstallationArray] = useState([]);
   const [workArray, setWorkArray] = useState([]);
   const [causesArray, setCausesArray] = useState([]);
   const [causes, setCauses] = useState([]);
   const [causes2, setCauses2] = useState([]);
   const [isTouched, setIsTouched] = useState(false);
+  const [openTimer, setOpenTimer] = useState(false);
+  const { authUser } = useContext(AuthContext);
 
-  const toggleSwitch = () => {
-    setIsEnabled((previousState) => !previousState);
-    if (!isEnabled) {
-    }
-  };
   const toggleDatePicker = () => {
     setIsTouched(!isTouched);
   };
-
-  const eventStatus = ["fixed", "discovered", "mid-way"];
 
   const addEvent = async (values) => {
     await AsyncStorage.getItem("access").then((access) => {
@@ -74,12 +63,8 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
           {
             work: { id: parseInt(values.work) },
             event_type: { id: parseInt(values.eventType) },
-            event_status: "Status of the event",
-            event_duration: values.event_duration,
-            event_causes:causes2,
-            code: values.code,
-            label: values.label,
-            start_date: date,
+            event_causes: causes2,
+            start_date: values.start_date + "T" + values.start_date_time,
             event_description: values.event_description,
           },
           {
@@ -89,43 +74,14 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
           }
         )
         .then((res) => {
-          console.log(`response${res}`);
+          alert(`response : ${JSON.stringify(res.data)}`);
         })
         .catch((error) => {
-          console.log(" from submitting form", JSON.stringify(error));
+          alert(`from submitting error:, ${error}`);
         });
     });
   };
-  const fetchEventT = async (company) => {
-    await AsyncStorage.getItem("access").then(async (val) => {
-      try {
-        const response = axios({
-          method: "GET",
-          url: `${BaseURL}/api/basedata/event_type/all/`,
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${val}`,
-          },
-          data: {},
-          params: {
-            company_id: company,
-          },
-        }).then((value) => {
-          const eventTarray = value.data.map((eventT) => {
-            return {
-              key: JSON.stringify(eventT.id),
-              value: eventT.label,
-            };
-          });
-          setEventTArray(eventTarray);
-        });
-      } catch (error) {
-        console.error("Error fetching event type data:", error);
-        setIsLoading(false);
-      }
-    });
-  };
+
   const fetchCauses = async (event_t) => {
     await AsyncStorage.getItem("access").then(async (val) => {
       try {
@@ -141,53 +97,66 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
           params: {
             event_type_id: event_t,
           },
-        }).then((value) => {
-          const causesarray = value.data.map((causes) => {
-            return {
-              key: JSON.stringify(causes.id),
-              value: causes.label,
-            };
+        })
+          .then((response) => {
+            const causesarray = response.data.map((causes) => {
+              return {
+                key: JSON.stringify(causes.id),
+                value: causes.label,
+              };
+            });
+            setCausesArray(causesarray);
+          })
+          .catch((err) => {
+            alert(err);
           });
-          setCausesArray(causesarray);
-        });
       } catch (error) {
-        console.error("Error fetching event type data:", error);
+        alert("Error fetching event type data:", error);
         setIsLoading(false);
       }
     });
   };
   const fetchWork = async (installation) => {
-    await AsyncStorage.getItem("access").then(async (val) => {
-      try {
-        const response = axios({
-          method: "GET",
-          url: `${BaseURL}/api/basedata/work/all/`,
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${val}`,
-          },
-          data: {},
-          params: {
-            installation_id: installation,
-          },
-        }).then((value) => {
-          const workarray = value.data.map((work) => {
-            return {
-              key: JSON.stringify(work.id),
-              value: work.label,
-            };
-          });
-          setWorkArray(workarray);
-        });
-      } catch (error) {
-        console.error("Error fetching work data:", error);
-        setIsLoading(false);
-      }
-    });
+    await AsyncStorage.getItem("access")
+      .then(async (val) => {
+        try {
+          const response = axios({
+            method: "GET",
+            url: `${BaseURL}/api/basedata/work/all/`,
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+              Authorization: `Bearer ${val}`,
+            },
+            data: {},
+            params: {
+              installation_id: installation,
+            },
+          })
+            .then((value) => {
+              const workarray = value.data.map((work) => {
+                return {
+                  key: JSON.stringify(work.id),
+                  value: work.label,
+                };
+              });
+              setWorkArray(workarray);
+            })
+            .catch((err) => {
+              alert(err);
+            });
+        } catch (error) {
+          alert("Error fetching work data:", error);
+          setIsLoading(false);
+        }
+      })
+      .catch((err) => {
+        alert(`${err} from fetchWork`);
+      });
   };
 
-  const fetchStructure = async (company) => {
+  {
+    /*const fetchStructure = async (company) => {
     await AsyncStorage.getItem("access").then(async (val) => {
       try {
         const response = axios({
@@ -210,74 +179,92 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
             };
           });
           setStructureArray(structurearray);
+        }).catch((err)=>{
+          alert(err);
         });
       } catch (error) {
-        console.error("Error fetching structure data:", error);
+        alert("Error fetching structure data:", error);
         setIsLoading(false);
       }
     });
-  };
+  };*/
+  }
   const fetchinstallation = async (structure) => {
-    await AsyncStorage.getItem("access").then(async (val) => {
-      try {
-        const response = axios({
-          method: "GET",
-          url: `${BaseURL}/api/basedata/installation/all/`,
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${val}`,
-          },
-          data: {},
-          params: {
-            structure_id: structure,
-          },
-        }).then((value) => {
-          const installationarray = value.data.map((installation) => {
-            return {
-              key: JSON.stringify(installation.id),
-              value: installation.label,
-            };
-          });
-          setInstallationArray(installationarray);
-        });
-      } catch (error) {
-        console.error("Error fetching installation data:", error);
-        setIsLoading(false);
-      }
-    });
-  };
-  useEffect(() => {
-    const fetchCompany = async () => {
-      await AsyncStorage.getItem("access").then(async (val) => {
+    await AsyncStorage.getItem("access")
+      .then(async (val) => {
         try {
-          const response = await axios
-            .get(`${BaseURL}/api/basedata/company/all/`, {
-              headers: {
-                Authorization: `Bearer ${val}`,
-              },
-            })
-            .then((res) => {
-              const companyArray = res.data.map((company) => {
+          const response = axios({
+            method: "GET",
+            url: `${BaseURL}/api/basedata/installation/all/`,
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+              Authorization: `Bearer ${val}`,
+            },
+            data: {},
+            params: {
+              structure_id: structure,
+            },
+          })
+            .then((value) => {
+              const installationarray = value.data.map((installation) => {
                 return {
-                  key: JSON.stringify(company.id),
-                  value: company.label,
+                  key: JSON.stringify(installation.id),
+                  value: installation.label,
                 };
               });
-              setCompanyArray(companyArray);
+              setInstallationArray(installationarray);
+            })
+            .catch((err) => {
+              alert(err);
             });
         } catch (error) {
-          console.error("Error fetching company data:", error);
+          alert("Error fetching installation data:", error);
           setIsLoading(false);
         }
+      })
+      .catch((err) => {
+        alert(`${err} from fetchInstallation`);
       });
-    };
-
-    fetchCompany();
-    fetchStructure("");
+  };
+  const fetchEventT = async (company) => {
+    await AsyncStorage.getItem("access")
+      .then(async (val) => {
+        try {
+          const response = axios({
+            method: "GET",
+            url: `${BaseURL}/api/basedata/event_type/all/`,
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+              Authorization: `Bearer ${val}`,
+            },
+            data: {},
+            params: {
+              company_id: company,
+            },
+          }).then((value) => {
+            const eventTarray = value.data.map((eventT) => {
+              return {
+                key: JSON.stringify(eventT.id),
+                value: eventT.label,
+              };
+            });
+            setEventTArray(eventTarray);
+          });
+        } catch (error) {
+          alert("Error fetching event type data:", error);
+          setIsLoading(false);
+        }
+      })
+      .catch((err) => {
+        alert(`${err} from fetchEventT`);
+      });
+  };
+  useEffect(() => {
     fetchWork("");
-    fetchinstallation("");
-    fetchEventT("");
+    fetchinstallation(authUser.structure_id);
+    fetchEventT(authUser.company_id);
     fetchCauses("");
   }, []);
 
@@ -293,25 +280,24 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
       <TouchableWithoutFeedback>
         <View style={globalStyles.modalContent}>
           <Text style={globalStyles.modalTitle}>Add Event</Text>
-          <ScrollView>
+          <ScrollView
+            style={{
+              padding: 19,
+            }}
+          >
             <Formik
               initialValues={{
                 work: null,
-                company: null,
-                structure: null,
                 eventType: null,
                 causes: [{}],
-                label: "",
                 description: "",
-                code: "",
                 location: "",
                 start_date: "",
-                eventStatus: "",
-                event_duration: "",
+                start_date_time: "",
               }}
               validationSchema={eventSchema}
               onSubmit={(values, actions) => {
-                console.log("submitted");
+                setIsLoading(true);
                 addEvent(values);
                 actions.resetForm();
                 actions.setSubmitting(false);
@@ -319,105 +305,114 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
               }}
             >
               {(props) => (
-                <View>
-                  <Text style={globalStyles.label}>Code</Text>
-                  <TextInput
-                    style={globalStyles.input}
-                    onChangeText={props.handleChange("code")}
-                    onBlur={props.handleBlur("code")}
-                    value={props.values.code}
-                  />
-                  <Text style={globalStyles.errorText}>
-                    {props.touched.code && props.errors.code}
-                  </Text>
-
-                  <Text style={globalStyles.label}>Label</Text>
-                  <TextInput
-                    style={globalStyles.input}
-                    onChangeText={props.handleChange("label")}
-                    onBlur={props.handleBlur("label")}
-                    value={props.values.label}
-                  />
-                  <Text style={globalStyles.errorText}>
-                    {props.touched.label && props.errors.label}
-                  </Text>
-
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: "center",
+                    padding: 20,
+                  }}
+                >
                   <Text style={globalStyles.label}>Start Date</Text>
-                  {isTouched && (
-                    <DateTimePicker
-                      mode="date"
-                      display="spinner"
-                      value={startDate}
-                      onChange={({ type }, currentDate) => {
-                        if (type === "set") {
-                          setStartDate(currentDate);
-                          setDate(currentDate.toISOString().split("T")[0]);
-                          props.handleChange("start_date")(
-                            currentDate.toISOString().split("T")[0]
-                          );
-                          console.log("props date", props.values.start_date);
-                          if (Platform.OS === "android") {
-                            console.log(props.values);
-                            setIsTouched(false);
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      flex: 1,
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    {isTouched && (
+                      <DateTimePicker
+                        mode="date"
+                        display="spinner"
+                        value={startDate}
+                        onChange={({ type }, currentDate) => {
+                          if (type === "set") {
+                            props.handleChange("start_date")(
+                              currentDate.toISOString().split("T")[0]
+                            );
+                            if (Platform.OS === "android") {
+                              setIsTouched(false);
+                              setOpenTimer(true);
+                            }
+                          } else {
+                            toggleDatePicker();
                           }
-                        } else {
-                          toggleDatePicker();
-                        }
-                      }}
-                    />
-                  )}
-                  {!isTouched && (
-                    <Pressable
-                      onPress={() => {
-                        toggleDatePicker();
-                      }}
-                    >
-                      <TextInput
-                        style={globalStyles.input}
-                        placeholder={startDate.toISOString().split("T")[0]}
-                        onChangeText={() => {
-                          props.handleChange("start_date");
                         }}
-                        onBlur={() => {
-                          props.handleBlur("start_date");
-                        }}
-                        value={startDate.toISOString()}
-                        editable={false}
                       />
-                    </Pressable>
-                  )}
+                    )}
+                    {!isTouched && (
+                      <Pressable
+                        onPress={() => {
+                          toggleDatePicker();
+                        }}
+                      >
+                        <TextInput
+                          style={globalStyles.input}
+                          placeholder={startDate.toISOString().split("T")[0]}
+                          onChangeText={() => {
+                            props.handleChange("start_date");
+                          }}
+                          onBlur={() => {
+                            props.handleBlur("start_date");
+                          }}
+                          value={startDate.toISOString().split("T")[0]}
+                          editable={false}
+                        />
+                      </Pressable>
+                    )}
+                    {openTimer && (
+                      <DateTimePicker
+                        mode="time"
+                        display="spinner"
+                        value={startDate}
+                        onChange={({ type }, currentDate) => {
+                          if (type === "set") {
+                            props.handleChange("start_date_time")(
+                              currentDate.toISOString().split("T")[1]
+                            );
+                            setOpenTimer(false);
+                          } else {
+                            setOpenTimer(false);
+                          }
+                        }}
+                      />
+                    )}
+                    {!isTouched && (
+                      <Pressable
+                        onPress={() => {
+                          setOpenTimer(true);
+                        }}
+                      >
+                        <TextInput
+                          style={globalStyles.input}
+                          placeholder={startDate.toISOString().split("T")[1]}
+                          onChangeText={() => {
+                            props.handleChange("start_date_time");
+                          }}
+                          onBlur={() => {
+                            props.handleBlur("start_date_time");
+                          }}
+                          value={startDate.toISOString().split("T")[1]}
+                          editable={false}
+                        />
+                      </Pressable>
+                    )}
+                  </View>
                   <Text style={globalStyles.errorText}>
-                    {props.errors["start_date"]}
-                  </Text>
-
-                  <Text style={globalStyles.label}>Company</Text>
-                  <SelectList
-                    setSelected={(val) => {
-                      props.handleChange("company")(val);
-                      fetchStructure(parseInt(val));
-                      fetchEventT(parseInt(val));
-                    }}
-                    data={companyArray}
-                    save="key"
-                  />
-                  <Text style={globalStyles.errorText}>
-                    {props.touched.company && props.errors.company}
-                  </Text>
-
-                  <Text style={globalStyles.label}>Structure</Text>
-                  <SelectList
-                    setSelected={(val) => {
-                      props.handleChange("structure")(val);
-                      fetchinstallation(parseInt(val));
-                    }}
-                    data={structureArray}
-                    save="key"
-                  />
-                  <Text style={globalStyles.errorText}>
-                    {props.touched.structure && props.errors.structure}
+                    {props.errors["start_date_time"]}
                   </Text>
                   <Text style={globalStyles.label}>Installation</Text>
                   <SelectList
+                    boxStyles={{
+                      borderBottomWidth: 1.5,
+                      borderBottomColor: "#5cc1e0",
+                      //padding: 16,
+                      fontSize: 20,
+                      borderRadius: 6,
+                      //marginHorizontal: 2,
+                      //marginVertical: 2,
+                      backgroundColor: "#f1f1f1",
+                    }}
                     setSelected={(val) => {
                       props.handleChange("installation")(val);
                       fetchWork(parseInt(val));
@@ -430,6 +425,7 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
                   </Text>
                   <Text style={globalStyles.label}>Work</Text>
                   <SelectList
+                    boxStyles={globalStyles.input}
                     setSelected={(val) => props.handleChange("work")(val)}
                     data={workArray}
                     save="key"
@@ -440,6 +436,7 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
 
                   <Text style={globalStyles.label}>Event Type </Text>
                   <SelectList
+                    boxStyles={globalStyles.input}
                     setSelected={(val) => {
                       props.handleChange("eventType")(val);
                     }}
@@ -451,14 +448,22 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
                   </Text>
                   <Text style={globalStyles.label}>Event Causes </Text>
                   <MultipleSelectList
+                    badgeStyles={{
+                      color: "#FF1358",
+                      backgroundColor: "#829BF8",
+                    }}
+                    boxStyles={globalStyles.input}
                     setSelected={(val) => {
                       setCauses(val);
                     }}
                     onSelect={() => {
                       console.log(causes);
-                      setCauses2(causes.map((val)=>{return({"id":val})}))
+                      setCauses2(
+                        causes.map((val) => {
+                          return { id: val };
+                        })
+                      );
                       console.log(causes2);
-
                     }}
                     data={causesArray}
                     save="key"
@@ -476,68 +481,45 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
                     {props.touched.description && props.errors.description}
                   </Text>
 
-                  <View style={globalStyles.switchContainer}>
-                    <Text style={globalStyles.switchLabel}>
-                      Additional Information
-                    </Text>
-                    <Switch
-                      trackColor={{ false: "#767577", true: "#81b0ff" }}
-                      thumbColor={isEnabled ? "#f5dd4b" : "#f4f3f4"}
-                      ios_backgroundColor="#3e3e3e"
-                      onValueChange={toggleSwitch}
-                      value={isEnabled}
-                    />
-                  </View>
-
-                  {isEnabled && (
-                    <>
-                      <Text style={globalStyles.label}>Event Status</Text>
-                      <Picker
-                        style={globalStyles.input}
-                        selectedValue={props.values.eventStatus}
-                        onValueChange={(value) => {
-                          if (value !== null) {
-                            props.handleChange("eventStatus")(value);
-                          }
-                        }}
-                      >
-                        <Picker.Item
-                          label="Select Event Status"
-                          value={null}
-                          enabled={false}
-                        />
-                        {eventStatus.map((item, index) => {
-                          return (
-                            <Picker.Item
-                              label={item}
-                              value={item}
-                              key={index}
-                            />
-                          );
-                        })}
-                      </Picker>
-                      <Text style={globalStyles.errorText}>
-                        {props.touched.eventStatus && props.errors.eventStatus}
-                      </Text>
-                    </>
-                  )}
-
                   <View style={globalStyles.buttonContainer}>
-                    <Button
-                      color="maroon"
-                      title="Cancel"
+                    <Pressable
+                      color={globalColors.primary}
                       onPress={() => {
                         props.resetForm();
                         setCauses([]);
                         setCauses2([]);
                         setModalOpen(false);
                       }}
-                    />
-                    <Button
-                      color="maroon"
+                    >
+                      <Text
+                        style={{
+                          color: globalColors.secondary,
+                          padding: 10,
+                          margin: 10,
+                          backgroundColor: globalColors.primary,
+                          borderRadius: 10,
+                        }}
+                      >
+                        Cancel
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      color={globalColors.primary}
                       title="Submit"
                       onPress={props.handleSubmit}
-                    />
+                    >
+                      <Text
+                        style={{
+                          color: globalColors.secondary,
+                          padding: 10,
+                          margin: 10,
+                          backgroundColor: globalColors.primary,
+                          borderRadius: 10,
+                        }}
+                      >
+                        Submit
+                      </Text>
+                    </Pressable>
                   </View>
                   {/* Render your form fields here */}
                 </View>

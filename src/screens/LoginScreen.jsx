@@ -1,3 +1,4 @@
+//login screen
 import React, { useState, useContext } from "react";
 import {
   View,
@@ -10,7 +11,7 @@ import {
 import { AuthContext } from "../contexts/AuthContext";
 import Spinner from "react-native-loading-spinner-overlay";
 import LinearGradient from "../components/LinearGradient";
-import axios from "axios";
+import { globalColors, globalStyles } from "../styles/global";
 
 const LoginScreen = ({ navigation }) => {
   const [user_name, setUserName] = useState("");
@@ -19,6 +20,8 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <LinearGradient>
+      <SafeAreaView />
+
       <View
         style={{
           flex: 1,
@@ -32,6 +35,22 @@ const LoginScreen = ({ navigation }) => {
           textStyle={{ color: "#FFF" }}
         />
         <View style={styles.container}>
+          <View
+            style={{
+              paddingTop: 40,
+              marginBottom: 20,
+            }}
+          >
+            <Text
+              style={{
+                color: globalColors.secondary,
+                fontSize: 50,
+                margin: 20,
+              }}
+            >
+              WELCOME TO SONELGAZ
+            </Text>
+          </View>
           <Text style={styles.text}>Username</Text>
           <TextInput
             style={styles.input}
@@ -47,10 +66,12 @@ const LoginScreen = ({ navigation }) => {
             onChangeText={(text) => setPassword(text)}
           />
           <TouchableOpacity
-            style={styles.button}
-            onPress={() => login("user", "1234")}
+            style={globalStyles.button}
+            onPress={() => login(user_name, password)}
           >
-            <Text style={styles.buttonText}>Login</Text>
+            <Text style={{ color:globalColors.bg,
+            fontSize:24,
+            }}>Login</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -62,7 +83,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
+    //justifyContent: "center",
   },
   input: {
     borderWidth: 1,
@@ -86,7 +107,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   text: {
-    color: "#FFF",
+    color: globalColors.primary,
     fontSize: 16,
     marginBottom: 5,
   },

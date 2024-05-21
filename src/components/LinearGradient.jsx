@@ -1,19 +1,32 @@
-import React from "react";
+import React, {useContext} from "react";
 import { LinearGradient } from "expo-linear-gradient";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, ImageBackground } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
+import { globalColors } from "../styles/global";
+import NotificationModal from "../components/Notification_model";
+import AuthContext from "../contexts/AuthContext";
 
 const GradientBackground = ({ children }) => {
+  const {isLoggedIn ,isModalVisible, setIsModalVisible, notification } =
+    useContext(AuthContext);
   return (
-    <LinearGradient colors={["#cdb4db", "#abc4ff"]} style={styles.gradient}>
+    //<ImageBackground #cdb4db source#abc4ff={require('../assets/background.png')} style={styles.gradient}>
+    <LinearGradient
+      colors={[globalColors.bg, globalColors.bg]}
+      style={styles.gradient}
+    >
+    
+      
       {children}
     </LinearGradient>
+    //</ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
   gradient: {
     flex: 1,
+    padding: 10,
   },
   content: {
     flex: 1,
