@@ -309,15 +309,19 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
                   style={{
                     flex: 1,
                     justifyContent: "center",
-                    padding: 20,
+                    alignContent:"center",
+                    justifyContent: "center",
+                    alignContent: "center",
+                    //padding: 20,
                   }}
                 >
                   <Text style={globalStyles.label}>Start Date</Text>
-                  <View
+                  <ScrollView
                     style={{
                       flexDirection: "row",
                       flex: 1,
-                      justifyContent: "space-between",
+                      
+                      
                     }}
                   >
                     {isTouched && (
@@ -397,7 +401,7 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
                         />
                       </Pressable>
                     )}
-                  </View>
+                  </ScrollView>
                   <Text style={globalStyles.errorText}>
                     {props.errors["start_date_time"]}
                   </Text>

@@ -8,6 +8,7 @@ import {
   Pressable,
   ScrollView,
 } from "react-native";
+import MultiSelect from 'react-native-multiple-select';
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import Spinner from "react-native-loading-spinner-overlay";
@@ -48,6 +49,25 @@ export default function HomeScreen() {
   const [isTouched, setIsTouched] = useState(false);
   const [isTouched2, setIsTouched2] = useState(false);
 
+  const items = [
+    // name key is must. It is to show the text in front
+    {id: 1, name: 'angellist'},
+    {id: 2, name: 'codepen'},
+    {id: 3, name: 'envelope'},
+    {id: 4, name: 'etsy'},
+    {id: 5, name: 'facebook'},
+    {id: 6, name: 'foursquare'},
+    {id: 7, name: 'github-alt'},
+    {id: 8, name: 'github'},
+    {id: 9, name: 'gitlab'},
+    {id: 10, name: 'instagram'},
+  ];
+
+  const onSelectedItemsChange = (selectedItems) => {
+    // Set Selected Items
+    setSelectedStruct(selectedItems);
+  };
+
   useEffect(() => {
     const fetchStructChildren = async (company_id) => {
       setIsLoading(true);
@@ -58,7 +78,6 @@ export default function HomeScreen() {
               .get(
                 `${BaseURL}/api/basedata/structure/children_structures/all/`,
                 {
-                  params: { structure_id: authUser.structure },
                   headers: {
                     Authorization: `Bearer ${access}`,
                   },
@@ -68,8 +87,8 @@ export default function HomeScreen() {
                 setStructureArray(
                   response.data.map((item) => {
                     return {
-                      key: item.id,
-                      value: item.label,
+                      id: item.id,
+                      name: item.label,
                     };
                   })
                 );
@@ -119,7 +138,7 @@ export default function HomeScreen() {
       setIsLoading(false);
     };
     fetchStructChildren(null);
-  }, [authUser]);
+  }, []);
 
   const getEventByDateRange = async (values) => {
     setIsLoading(true);
@@ -230,12 +249,32 @@ export default function HomeScreen() {
         onSubmit={(values) => {
           console.log(JSON.stringify(values));
           getEventByDateRange(values);
-          setSelectedStruct([null]);
+          setSelectedStruct([]);
         }}
       >
         {(props) => (
           <>
-            <MultipleSelectList
+          <MultiSelect
+          
+          items={structureArray}
+          uniqueKey="id"
+          onSelectedItemsChange={onSelectedItemsChange}
+          selectedItems={selectedStruct}
+          selectText="Pick Structures"
+          searchInputPlaceholderText="Search Structures..."
+          onChangeInput={(text) => console.log(text)}
+          tagRemoveIconColor={globalColors.primary}
+          tagBorderColor={globalColors.tertiary}
+          tagTextColor={globalColors.secondary}
+          selectedItemTextColor={globalColors.primary}
+          selectedItemIconColor={globalColors.secondary}
+          itemTextColor={globalColors.primary}
+          displayKey="name"
+          searchInputStyle={{color: globalColors.primary}}
+          submitButtonColor={globalColors.secondary}
+          submitButtonText="Submit"
+        />
+            {/* <MultipleSelectList
               badgeStyles={{
                 color: globalColors.tertiary,
                 backgroundColor: globalColors.primary,
@@ -244,13 +283,12 @@ export default function HomeScreen() {
               boxStyles={globalStyles.input}
               setSelected={(val) => {
                 setSelectedStruct(val);
-                console.log(`${selectedStruct} selected`);
               }}
               placeholder="Choose your Structure"
               data={structureArray}
               save="key"
               label="Structures"
-            />
+            /> */}
             <Text style={globalStyles.errorText}>
               {props.errors.structures}
             </Text>

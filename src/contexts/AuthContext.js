@@ -6,6 +6,7 @@ import { BaseURL } from "../config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { jwtDecode } from "jwt-decode";
 import { decode } from "base-64";
+import { registerIndieID, unregisterIndieDevice } from "native-notify";
 
 global.atob = decode;
 
@@ -29,7 +30,7 @@ export const AuthProvider = ({ children }) => {
           setIsLoading(true);
           await AsyncStorage.getItem("refresh")
             .then(async (refresh) => {
-              await axios
+              axios
                 .post(`${BaseURL}/api/user/token/refresh/`, {
                   refresh: refresh,
                 })
@@ -37,6 +38,7 @@ export const AuthProvider = ({ children }) => {
                   const data = JSON.stringify(response.data.access);
                   const user = jwtDecode(data);
                   setUser(user);
+                  registerIndieID(user.name, 21135, "QG1T2O5TtmkEISR9ted9aG");
                   setAuthToken(response.data);
                   const setToken = [
                     ["refresh", response.data.refresh],
@@ -93,18 +95,12 @@ export const AuthProvider = ({ children }) => {
         setIsLoggedIn(false);
       }
     } catch (error) {
-      console.error("Error checking storage tokens:", error);
+      console.log("Error checking storage tokens:", error);
     }
   };
 
   useEffect(() => {
     checkStorageToken();
-  }, []);
-  useEffect(() => {
-    let threehours = 1000 * 60 * 60 * 3;
-
-    let interval = setInterval(() => {}, threehours);
-    return () => clearInterval(interval);
   }, []);
 
   const login = (user, password) => {
@@ -118,6 +114,7 @@ export const AuthProvider = ({ children }) => {
         const data = JSON.stringify(response.data.access);
         const user = jwtDecode(data);
         setUser(user);
+        registerIndieID(user.name, 21135, "QG1T2O5TtmkEISR9ted9aG");
         setAuthToken(response.data);
         const setToken = [
           ["refresh", response.data.refresh],
@@ -151,41 +148,81 @@ export const AuthProvider = ({ children }) => {
   };
 
   const checkNotification = async () => {
-    await AsyncStorage.getItem("access")
-      .then(async (access) => {
-        await axios
-          .get(`${BaseURL}/api/notifications/get_new_notification/`, {
-            headers: {
-              Authorization: `Bearer ${access}`,
-            },
-          })
-          .then(async (notification) => {
-            const lastNotificationId = await AsyncStorage.getItem(
-              "lastNotificationId"
-            );
-            const notificationId = notification.data.id.toString();
-            console.log(notification.data.id, lastNotificationId);
-            if (notificationId !== lastNotificationId) {
-              AsyncStorage.setItem("lastNotificationId", notificationId);
-              setIsModalVisible(true);
-              setNotification(notification.data);
-              console.log("New notification fetched:", notification.data);
-            } else {
-              console.log("No new notifications");
-              setNotification(null);
-            }
-          })
-          .catch((error) => {
-            console.error("Error fetching notifications:", error);
-          });
-      })
-      .catch((error) => {
-        alert("Error getting access token:", error);
-      });
+    try {
+      await AsyncStorage.getItem("access")
+        .then(async (access) => {
+          if (!access) return;
+          user = jwtDecode(access);
+          console.log(user.name);
+          await axios
+            .get(`${BaseURL}/api/notifications/get_new_notification/`, {
+              headers: {
+                Authorization: `Bearer ${access}`,
+              },
+            })
+            .then(async (response) => {
+              notificationIdFromResponse = response.data.id.toString();
+              AsyncStorage.getItem("lastNotificationId").then(
+                async (lastNId) => {
+                  console.log(notificationIdFromResponse=== lastNId);
+                  if (notificationIdFromResponse === lastNId) {
+                    setNotification(null);
+                    return;
+                  }
+                  else {
+                    AsyncStorage.setItem(
+                      "lastNotificationId",
+                      notificationIdFromResponse
+                    );
+                    setNotification(response.data);
+                    console.log("Notification:", response.data);
+                    try {
+                      await axios
+                        .post(
+                          "https://app.nativenotify.com/api/indie/notification",
+                          {
+                            subID: user.name,
+                            appId: 21135,
+                            appToken: "QG1T2O5TtmkEISR9ted9aG",
+                            dateSent: new Date().toISOString(),
+                            title: response.data.title,
+                            message: response.data.description,
+                          }
+                        )
+                        .then((responsee) => {
+                          console.log("Notification sent to indie:", responsee.data);
+                        })
+                        .catch((error) => {
+                          console.log(
+                            "Error sending notification to indie:",
+                            error
+                          );
+                        });
+                    } catch (error) {
+                      console.log(
+                        "Error sending notificationfrom the post notification:",
+                        error
+                      );
+                    }
+                  }
+                }
+              );
+            })
+            .catch((error) => {
+              console.log("Error fetching :", JSON.stringify(error));
+            });
+        })
+        .catch((TokenError) => {
+          console.log("TokenError fetching notifications:", TokenError);
+          logout();
+        });
+    } catch (error) {
+      console.log("Error fetching notifications:", error);
+    }
   };
   useEffect(() => {
     //checkNotification();
-    setInterval(checkNotification, 10000); // Fetch every 10 seconds
+    setInterval(checkNotification, 10000);  //Fetch every 10 seconds
   }, []);
 
   data = {
