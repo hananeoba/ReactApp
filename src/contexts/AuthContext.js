@@ -1,12 +1,13 @@
 import axios from "axios";
 import { useState, useEffect, createContext } from "react";
-import { StyleSheet } from "react-native";
+import * as TaskManager from "expo-task-manager";
 import React from "react";
 import { BaseURL } from "../config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { jwtDecode } from "jwt-decode";
 import { decode } from "base-64";
 import { registerIndieID, unregisterIndieDevice } from "native-notify";
+import * as BackgroundFetch from "expo-background-fetch";
 
 global.atob = decode;
 
@@ -18,7 +19,6 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [lastNotificationId, setLastNotificationId] = useState(null);
-  const [notificationOpen, setNotificationOpen] = useState(null);
   const [notification, setNotification] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
@@ -49,14 +49,14 @@ export const AuthProvider = ({ children }) => {
                   console.log("Token updated successfully!");
                 })
                 .catch((err) => {
-                  alert(`${err.message}while refreshing token from server`);
+                  alert(`${err.message} while refreshing token from server`);
                   logout();
                   clearInterval();
                   setIsLoading(false);
                 });
             })
             .catch((error) => {
-              alert(`${error} while getting refresh token from asyncStorage`);
+              alert(`${error} while getting refresh token from AsyncStorage`);
               logout();
               clearInterval();
               setIsLoading(false);
@@ -131,14 +131,24 @@ export const AuthProvider = ({ children }) => {
       });
   };
 
+  async function unregisterBackgroundFetchAsync() {
+    return BackgroundFetch.unregisterTaskAsync(BACKGROUND_FETCH_TASK);
+  }
+
   const logout = async () => {
     try {
-      axios.post(`${BaseURL}/api/user/logout/`, {
+      await axios.post(`${BaseURL}/api/user/logout/`, {
         refresh: authToken.refresh,
       });
       await AsyncStorage.multiRemove(["refresh", "access"]).then(() => {
         setUser({});
         setAuthToken({});
+        unregisterBackgroundFetchAsync();
+        unregisterIndieDevice(
+          authUser.name, // Correct user ID for unregistering
+          21135,
+          "QG1T2O5TtmkEISR9ted9aG"
+        );
         setIsLoggedIn(false);
         checkStorageToken();
       });
@@ -147,13 +157,68 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const BACKGROUND_FETCH_TASK = "background-fetch-task";
+
+  TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
+    if (isLoggedIn) {
+      await checkNotification();
+    }
+    return TaskManager.Result.NewData;
+  });
+
+  useEffect(() => {
+    const configureBackgroundFetch = async () => {
+      try {
+        console.log("Background fetch task registered");
+        await BackgroundFetch.registerTaskAsync("background-fetch-task", {
+          minimumInterval: 15 * 60, // 15 minutes
+          stopOnTerminate: false, // Continue background fetch even when the app is terminated
+          startOnBoot: true, // Start background fetch on device boot
+        });
+        console.log("Background fetch task registered");
+      } catch (error) {
+        console.log("Failed to register background fetch task", error);
+      }
+    };
+
+    if (isLoggedIn) {
+      configureBackgroundFetch();
+    }
+  }, [isLoggedIn]);
+
+  const setNotificationRead = async (access, notification) => {
+    try {
+      await axios
+        .patch(
+          `${BaseURL}/api/notifications/set_notification_read/`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${access}`,
+            },
+            params: {
+              notification_id: notification.id,
+            },
+          }
+        )
+        .then(async (response) => {
+          console.log("Notification read:", response.data);
+        })
+        .catch((error) => {
+          console.log("Error fetching:", JSON.stringify(error));
+        });
+    } catch (error) {
+      console.log("Error fetching notifications:", error);
+    }
+  };
+
   const checkNotification = async () => {
     try {
       await AsyncStorage.getItem("access")
         .then(async (access) => {
           if (!access) return;
-          user = jwtDecode(access);
-          console.log(user.name);
+          const user = jwtDecode(access);
+          console.log(user.user_id);
           await axios
             .get(`${BaseURL}/api/notifications/get_new_notification/`, {
               headers: {
@@ -161,15 +226,26 @@ export const AuthProvider = ({ children }) => {
               },
             })
             .then(async (response) => {
-              notificationIdFromResponse = response.data.id.toString();
+              const notification = response.data;
+              const notificationIdFromResponse = response.data.id.toString();
+              const userNotification = notification.users.find(
+                (userr) => userr.user === user.user_id
+              );
+              console.log(userNotification, "this is user notification");
               AsyncStorage.getItem("lastNotificationId").then(
                 async (lastNId) => {
-                  console.log(notificationIdFromResponse=== lastNId);
+                  console.log(
+                    notificationIdFromResponse !== lastNId &&
+                      !userNotification.is_read
+                  );
+
                   if (notificationIdFromResponse === lastNId) {
                     setNotification(null);
                     return;
-                  }
-                  else {
+                  } else if (
+                    notificationIdFromResponse !== lastNId &&
+                    !userNotification.is_read
+                  ) {
                     AsyncStorage.setItem(
                       "lastNotificationId",
                       notificationIdFromResponse
@@ -190,7 +266,10 @@ export const AuthProvider = ({ children }) => {
                           }
                         )
                         .then((responsee) => {
-                          console.log("Notification sent to indie:", responsee.data);
+                          console.log(
+                            "Notification sent to indie:",
+                            responsee.data
+                          );
                         })
                         .catch((error) => {
                           console.log(
@@ -198,9 +277,11 @@ export const AuthProvider = ({ children }) => {
                             error
                           );
                         });
+                      console.log("notification is not read", access);
+                      setNotificationRead(access, notification);
                     } catch (error) {
                       console.log(
-                        "Error sending notificationfrom the post notification:",
+                        "Error sending notification from the post notification:",
                         error
                       );
                     }
@@ -209,7 +290,7 @@ export const AuthProvider = ({ children }) => {
               );
             })
             .catch((error) => {
-              console.log("Error fetching :", JSON.stringify(error));
+              console.log("Error fetching:", JSON.stringify(error));
             });
         })
         .catch((TokenError) => {
@@ -220,18 +301,19 @@ export const AuthProvider = ({ children }) => {
       console.log("Error fetching notifications:", error);
     }
   };
+
   useEffect(() => {
-    //checkNotification();
-    setInterval(checkNotification, 10000);  //Fetch every 10 seconds
+    checkNotification();
+    const intervalId = setInterval(checkNotification, 10000); // Fetch every 10 seconds
+    return () => clearInterval(intervalId);
   }, []);
 
-  data = {
+  const data = {
     login,
     logout,
     setIsLoading,
     setIsLoggedIn,
     checkStorageToken,
-    checkNotification,
     isLoading,
     isLoggedIn,
     authToken,

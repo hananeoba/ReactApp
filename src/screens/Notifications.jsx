@@ -9,7 +9,7 @@ import NotificationModel from "../components/Notification_model";
 import { ScrollView } from "react-native-gesture-handler";
 
 const Notifications = () => {
-  const { logout } = useContext(AuthContext);
+  const { logout, notification } = useContext(AuthContext);
   const [notifications, setNotifications] = useState([]);
   const fetchNotifications = async () => {
     await AsyncStorage.getItem("access")
@@ -37,7 +37,7 @@ const Notifications = () => {
   };
   useEffect(() => {
     fetchNotifications();
-  }, []);
+  }, [notification]);
 
   return (
     <View

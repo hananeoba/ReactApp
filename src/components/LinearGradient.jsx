@@ -12,7 +12,7 @@ const GradientBackground = ({ children }) => {
   return (
     //<ImageBackground #cdb4db source#abc4ff={require('../assets/background.png')} style={styles.gradient}>
     <LinearGradient
-      colors={[globalColors.white, globalColors.bg]}
+      colors={["white", "white"]}
       style={styles.gradient}
     >
       {isLoggedIn && (

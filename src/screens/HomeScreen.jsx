@@ -8,7 +8,7 @@ import {
   Pressable,
   ScrollView,
 } from "react-native";
-import MultiSelect from 'react-native-multiple-select';
+import MultiSelect from "react-native-multiple-select";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import Spinner from "react-native-loading-spinner-overlay";
@@ -48,20 +48,6 @@ export default function HomeScreen() {
   const [startDate, setStartDate] = useState(new Date());
   const [isTouched, setIsTouched] = useState(false);
   const [isTouched2, setIsTouched2] = useState(false);
-
-  const items = [
-    // name key is must. It is to show the text in front
-    {id: 1, name: 'angellist'},
-    {id: 2, name: 'codepen'},
-    {id: 3, name: 'envelope'},
-    {id: 4, name: 'etsy'},
-    {id: 5, name: 'facebook'},
-    {id: 6, name: 'foursquare'},
-    {id: 7, name: 'github-alt'},
-    {id: 8, name: 'github'},
-    {id: 9, name: 'gitlab'},
-    {id: 10, name: 'instagram'},
-  ];
 
   const onSelectedItemsChange = (selectedItems) => {
     // Set Selected Items
@@ -254,26 +240,26 @@ export default function HomeScreen() {
       >
         {(props) => (
           <>
-          <MultiSelect
-          
-          items={structureArray}
-          uniqueKey="id"
-          onSelectedItemsChange={onSelectedItemsChange}
-          selectedItems={selectedStruct}
-          selectText="Pick Structures"
-          searchInputPlaceholderText="Search Structures..."
-          onChangeInput={(text) => console.log(text)}
-          tagRemoveIconColor={globalColors.primary}
-          tagBorderColor={globalColors.tertiary}
-          tagTextColor={globalColors.secondary}
-          selectedItemTextColor={globalColors.primary}
-          selectedItemIconColor={globalColors.secondary}
-          itemTextColor={globalColors.primary}
-          displayKey="name"
-          searchInputStyle={{color: globalColors.primary}}
-          submitButtonColor={globalColors.secondary}
-          submitButtonText="Submit"
-        />
+            <MultiSelect
+              hideTags
+              items={structureArray}
+              uniqueKey="id"
+              onSelectedItemsChange={onSelectedItemsChange}
+              selectedItems={selectedStruct}
+              selectText="Pick Structures"
+              searchInputPlaceholderText="Search Structures..."
+              onChangeInput={(text) => console.log(text)}
+              tagRemoveIconColor={globalColors.primary}
+              tagBorderColor={globalColors.tertiary}
+              tagTextColor={globalColors.secondary}
+              selectedItemTextColor={globalColors.primary}
+              selectedItemIconColor={globalColors.secondary}
+              itemTextColor={globalColors.primary}
+              displayKey="name"
+              searchInputStyle={{ color: globalColors.primary }}
+              submitButtonColor={globalColors.secondary}
+              submitButtonText="Submit"
+            />
             {/* <MultipleSelectList
               badgeStyles={{
                 color: globalColors.tertiary,
@@ -296,6 +282,7 @@ export default function HomeScreen() {
               style={{
                 flexDirection: "row",
                 alignItems: "center",
+                justifyContent: "space-around",
               }}
             >
               {isTouched && (
@@ -390,7 +377,7 @@ export default function HomeScreen() {
               <ScrollView>
                 <View style={globalStyles.carts}>
                   <Text style={globalStyles.title}>
-                    Events this year: {countm}
+                    Events this year created by You: {countm}
                   </Text>
                   <ChartComponent
                     datata={eventMonth.map((item) => item.count)}
@@ -415,30 +402,9 @@ export default function HomeScreen() {
                       </View>
                     ))
                   ) : (
-                    <Text>No events to display</Text>
+                    <Text>You have not selected any structure</Text>
                   )}
                 </View>
-                {/* {events.map((eventData, index) => (
-                  <View key={index} style={globalStyles.carts}>
-                    <Text style={globalStyles.title}>
-                      Events for Structure{" "}
-                      {
-                        structureArray.find(
-                          (s) => s.key === props.values.structures[index]
-                        )?.value
-                      }
-                      :
-                    </Text>
-                    {eventData[0] && eventData[0].events.length > 0 ? (
-                      <ChartComponent
-                        datata={eventData[0].events.map((item) => item.count)}
-                        labels={eventData[0].events.map((item) => item.day)}
-                      />
-                    ) : (
-                      <Text>No events found</Text>
-                    )}
-                  </View>
-                ))} */}
               </ScrollView>
             </SafeAreaView>
           </>

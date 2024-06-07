@@ -38,10 +38,9 @@ const eventSchema = yup.object({
 
 const EventModal = ({ modalOpen, setModalOpen }) => {
   const [startDate, setStartDate] = useState(new Date());
-  const [date, setDate] = useState("");
+  const [user, setUser] = useState({});
   const [eventTArray, setEventTArray] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isEnabled, setIsEnabled] = useState(false);
   const [installationArray, setInstallationArray] = useState([]);
   const [workArray, setWorkArray] = useState([]);
   const [causesArray, setCausesArray] = useState([]);
@@ -116,6 +115,30 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
       }
     });
   };
+  const fetchUser = async () => {
+    await AsyncStorage.getItem("access")
+      .then(async (val) => {
+        try {
+          const response = axios.get(`${BaseURL}/api/user/get_user/`,{
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+              Authorization: `Bearer ${val}`,
+            },
+          })
+
+            .then((value) => {
+              setUser(value.data);
+            })
+            .catch((err) => {
+              alert(err);
+            });
+        } catch (error) {
+          alert("Error fetching user data:", error);
+        }
+      })
+    }
+
   const fetchWork = async (installation) => {
     await AsyncStorage.getItem("access")
       .then(async (val) => {
@@ -155,40 +178,6 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
       });
   };
 
-  {
-    /*const fetchStructure = async (company) => {
-    await AsyncStorage.getItem("access").then(async (val) => {
-      try {
-        const response = axios({
-          method: "GET",
-          url: `${BaseURL}/api/basedata/structure/all/`,
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${val}`,
-          },
-          data: {},
-          params: {
-            company_id: company,
-          },
-        }).then((value) => {
-          const structurearray = value.data.map((structure) => {
-            return {
-              key: JSON.stringify(structure.id),
-              value: structure.label,
-            };
-          });
-          setStructureArray(structurearray);
-        }).catch((err)=>{
-          alert(err);
-        });
-      } catch (error) {
-        alert("Error fetching structure data:", error);
-        setIsLoading(false);
-      }
-    });
-  };*/
-  }
   const fetchinstallation = async (structure) => {
     await AsyncStorage.getItem("access")
       .then(async (val) => {
@@ -262,9 +251,11 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
       });
   };
   useEffect(() => {
+    fetchUser();
     fetchWork("");
-    fetchinstallation(authUser.structure_id);
-    fetchEventT(authUser.company_id);
+    fetchinstallation(authUser.structure);
+    console.log(authUser.structure_id);
+    fetchEventT(authUser);
     fetchCauses("");
   }, []);
 
@@ -282,7 +273,9 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
           <Text style={globalStyles.modalTitle}>Add Event</Text>
           <ScrollView
             style={{
-              padding: 19,
+              flex: 1,
+              width: "95%",
+              //paddingVertical: 19,
             }}
           >
             <Formik
@@ -305,23 +298,12 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
               }}
             >
               {(props) => (
-                <View
-                  style={{
-                    flex: 1,
-                    justifyContent: "center",
-                    alignContent:"center",
-                    justifyContent: "center",
-                    alignContent: "center",
-                    //padding: 20,
-                  }}
-                >
+                <View>
                   <Text style={globalStyles.label}>Start Date</Text>
-                  <ScrollView
+                  <View
                     style={{
                       flexDirection: "row",
                       flex: 1,
-                      
-                      
                     }}
                   >
                     {isTouched && (
@@ -346,12 +328,15 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
                     )}
                     {!isTouched && (
                       <Pressable
+                        style={globalStyles.input}
                         onPress={() => {
                           toggleDatePicker();
                         }}
                       >
                         <TextInput
-                          style={globalStyles.input}
+                          style={{
+                            fontSize: 18,
+                          }}
                           placeholder={startDate.toISOString().split("T")[0]}
                           onChangeText={() => {
                             props.handleChange("start_date");
@@ -383,12 +368,15 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
                     )}
                     {!isTouched && (
                       <Pressable
+                        style={globalStyles.input}
                         onPress={() => {
                           setOpenTimer(true);
                         }}
                       >
                         <TextInput
-                          style={globalStyles.input}
+                          style={{
+                            fontSize: 18,
+                          }}
                           placeholder={startDate.toISOString().split("T")[1]}
                           onChangeText={() => {
                             props.handleChange("start_date_time");
@@ -401,22 +389,13 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
                         />
                       </Pressable>
                     )}
-                  </ScrollView>
+                  </View>
                   <Text style={globalStyles.errorText}>
                     {props.errors["start_date_time"]}
                   </Text>
                   <Text style={globalStyles.label}>Installation</Text>
                   <SelectList
-                    boxStyles={{
-                      borderBottomWidth: 1.5,
-                      borderBottomColor: "#5cc1e0",
-                      //padding: 16,
-                      fontSize: 20,
-                      borderRadius: 6,
-                      //marginHorizontal: 2,
-                      //marginVertical: 2,
-                      backgroundColor: "#f1f1f1",
-                    }}
+                    boxStyles={globalStyles.input}
                     setSelected={(val) => {
                       props.handleChange("installation")(val);
                       fetchWork(parseInt(val));
@@ -453,8 +432,7 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
                   <Text style={globalStyles.label}>Event Causes </Text>
                   <MultipleSelectList
                     badgeStyles={{
-                      color: "#FF1358",
-                      backgroundColor: "#829BF8",
+                      backgroundColor: globalColors.primary,
                     }}
                     boxStyles={globalStyles.input}
                     setSelected={(val) => {
@@ -497,7 +475,7 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
                     >
                       <Text
                         style={{
-                          color: globalColors.secondary,
+                          color: globalColors.light,
                           padding: 10,
                           margin: 10,
                           backgroundColor: globalColors.primary,
@@ -514,7 +492,7 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
                     >
                       <Text
                         style={{
-                          color: globalColors.secondary,
+                          color: globalColors.light,
                           padding: 10,
                           margin: 10,
                           backgroundColor: globalColors.primary,

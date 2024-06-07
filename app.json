@@ -36,11 +36,11 @@
         }
       ]
     ],
+    "owner": "hanane_ould",
     "extra": {
       "eas": {
         "projectId": "cc9b1eb2-2d5e-40bc-bfe6-78fcc352a101"
       }
-    },
-    "owner": "hanane_ould"
+    }
   }
 }
