@@ -359,6 +359,7 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
                             props.handleChange("start_date_time")(
                               currentDate.toISOString().split("T")[1]
                             );
+                            setStartDate(currentDate);
                             setOpenTimer(false);
                           } else {
                             setOpenTimer(false);
@@ -366,7 +367,7 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
                         }}
                       />
                     )}
-                    {!isTouched && (
+                    {!openTimer && (
                       <Pressable
                         style={globalStyles.input}
                         onPress={() => {
@@ -384,7 +385,7 @@ const EventModal = ({ modalOpen, setModalOpen }) => {
                           onBlur={() => {
                             props.handleBlur("start_date_time");
                           }}
-                          value={startDate.toISOString().split("T")[1]}
+                          value={props.start_date_time}
                           editable={false}
                         />
                       </Pressable>
