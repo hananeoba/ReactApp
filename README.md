@@ -21,7 +21,7 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
 # 📖 Final Year Project React Native
 
-**FakeStore mobile app**
+**SICIO mobile app**
 is a mobile application where users can declare and archive Operational Interruption Events of Sonelgaz. The application empowers users to:
 
 - <b>Effortlessly get Events Statistics :</b>
